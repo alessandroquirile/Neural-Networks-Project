@@ -1,13 +1,5 @@
 import numpy as np
 
-
-def sigmoid(x):
-    return 1 / (1 + np.exp(-1 * x))
-
-def identity(x):
-    return x
-
-
 class NeuralNetwork:
     """Una rete neurale è composta da uno o più layer"""
 
@@ -22,7 +14,7 @@ class NeuralNetwork:
             if i == 0:
                 layer.is_input = True
             else:
-                layer.init(self.layers[i - 1].neurons)
+                layer.init_parameters(self.layers[i - 1].neurons)
 
     def summary(self):
         for i, layer in enumerate(self.layers):
@@ -48,7 +40,8 @@ class Layer:
         self.is_input = is_input
         self.activation = activation
 
-    def init(self, prev_layer_neurons):
+    # Inizializza la matrice dei pesi ed il vettore dei bias
+    def init_parameters(self, prev_layer_neurons):
         self.weight = np.asmatrix(np.random.normal(0, 0.5, (self.neurons, prev_layer_neurons)))
         self.bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T
         if self.activation is None:
