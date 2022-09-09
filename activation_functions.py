@@ -8,5 +8,6 @@ def sigmoid(a):
 def identity(a):
     return a
 
+
 def relu(a):
     return a if a > 0 else 0
