@@ -1,4 +1,10 @@
-import numpy as np
+from activation_functions import *
+
+# dbg purpose
+def show(v):
+    print("Shape is", np.shape(v))
+    print(v)
+    print("")
 
 class NeuralNetwork:
     """Una rete neurale è composta da uno o più layer"""
@@ -28,12 +34,18 @@ class NeuralNetwork:
             print(layer.bias)
             print("")
 
+    def train(self, x, y):
+        z = x.T
+        for layer in self.layers:
+            z = layer.forward_prop(z)
+
 
 class Layer:
     """Un layer è composto da uno o più neuroni, una funzione di attivazione unica, matrice di pesi in ingresso
     e bias"""
 
     def __init__(self, neurons, is_input=False, activation=None):
+        self.out = None
         self.weight = None
         self.bias = None
         self.neurons = neurons
@@ -43,21 +55,41 @@ class Layer:
     # Inizializza la matrice dei pesi ed il vettore dei bias
     def init_parameters(self, prev_layer_neurons):
         self.weight = np.asmatrix(np.random.normal(0, 0.5, (self.neurons, prev_layer_neurons)))
-        self.bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T
+        self.bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T  # vettore colonna
         if self.activation is None:
             self.activation = sigmoid
+
+    def forward_prop(self, x):
+        # Se il layer è di input, si fa un un mirroring del vettore in ingresso
+        if self.is_input:
+            self.out = x
+        else:
+            w_sum = np.dot(self.weight, x) + self.bias
+            self.out = self.activation(w_sum)
+        show(self.out) # dbg
+        return self.out
 
 
 if __name__ == '__main__':
     net = NeuralNetwork()  # costruisco la rete
     d = 2  # dimensione dell'input
-    c = 3  # classi in output
+    c = 1  # classi in output
 
     for m in (d, 4, 4, c):
         layer = Layer(m)  # costruisco un layer con m neuroni
-        # print("layer", m, "has got", layer.neurons, "neurons") # dbg
         net.add_layer(layer)
 
     net.create()
 
-    net.summary()
+    # net.summary()  # dbg
+
+    # Training set
+    X = np.asmatrix([
+        [0, 0],
+        [0, 1],
+        [1, 0],
+        [1, 1]
+    ])
+    y = np.asarray([0, 0, 1, 0])
+
+    net.train(X[2], y[2])
