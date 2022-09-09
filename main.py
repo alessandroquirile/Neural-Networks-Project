@@ -1,10 +1,12 @@
 from activation_functions import *
 
+
 # dbg purpose
 def show(v):
     print("Shape is", np.shape(v))
     print(v)
     print("")
+
 
 class NeuralNetwork:
     """Una rete neurale è composta da uno o più layer"""
@@ -66,14 +68,14 @@ class Layer:
         else:
             w_sum = np.dot(self.weight, x) + self.bias
             self.out = self.activation(w_sum)
-        show(self.out) # dbg
+        show(self.out)  # dbg
         return self.out
 
 
 if __name__ == '__main__':
-    net = NeuralNetwork()  # costruisco la rete
+    net = NeuralNetwork()
     d = 2  # dimensione dell'input
-    c = 1  # classi in output
+    c = 1  # dimensione dell'output
 
     for m in (d, 4, 4, c):
         layer = Layer(m)  # costruisco un layer con m neuroni
