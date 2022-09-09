@@ -1,9 +1,12 @@
 import numpy as np
 
 
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
+def sigmoid(a):
+    return 1 / (1 + np.exp(-a))
 
 
-def identity(x):
-    return x
+def identity(a):
+    return a
+
+def relu(a):
+    return a if a > 0 else 0
