@@ -67,6 +67,7 @@ class Layer:
         else:
             w_sum = np.dot(self.weight, x) + self.bias
             self.out = self.activation(w_sum)
+        print("self.out")
         show(self.out)  # dbg
         return self.out
 
