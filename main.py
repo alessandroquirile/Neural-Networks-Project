@@ -20,15 +20,19 @@ class NeuralNetwork:
     def create(self):
         for i, layer in enumerate(self.layers):
             if i == 0:
-                layer.is_input = True
+                layer.type = "input"
             else:
+                if i == len(self.layers) - 1:
+                    layer.type = "output"
+                else:
+                    layer.type = "hidden"
                 layer.init_parameters(self.layers[i - 1].neurons)
 
     def summary(self):
         for i, layer in enumerate(self.layers):
             print("Layer", i)
             print("neurons:", layer.neurons)
-            print("is_input:", layer.is_input)
+            print("type:", layer.type)
             print("act:", layer.activation)
             print("weight:", np.shape(layer.weight))
             print(layer.weight)
@@ -43,7 +47,7 @@ class NeuralNetwork:
 
         # va dall'output all'input, escludendolo
         for layer in reversed(self.layers):
-            if not layer.is_input:
+            if layer.type != "input":
                 layer.back_prop()
                 print("")
 
@@ -52,13 +56,14 @@ class Layer:
     """Un layer è composto da uno o più neuroni, una funzione di attivazione unica, matrice di pesi in ingresso
     e bias"""
 
-    def __init__(self, neurons, is_input=False, activation=None):
+    def __init__(self, neurons, type=None, activation=None):
         self.out = None
         self.weight = None
         self.bias = None
         self.w_sum = None
         self.neurons = neurons
-        self.is_input = is_input
+        self.type = type
+        # self.is_input = is_input
         self.activation = activation
 
     # Inizializza la matrice dei pesi ed il vettore dei bias
@@ -72,7 +77,7 @@ class Layer:
 
     def forward_prop(self, x):
         # Se il layer è di input, si fa un un mirroring del vettore in ingresso
-        if self.is_input:
+        if self.type == "input":
             self.out = x
         else:
             self.w_sum = np.dot(self.weight, x) + self.bias
@@ -82,9 +87,10 @@ class Layer:
 
     def back_prop(self):
         # Se il layer è di output
-        if self.neurons == c:
+        if self.type == "output":
             for k in range(self.neurons):
                 # Calcolo il delta di ciascun nodo d'uscita k - BP1
+                # enumero i nodi di ciascun layer a partire da 0
                 print("self.wsum[%d]:\n" % k, self.w_sum[k])
                 df_a = self.activation(self.w_sum[k], derivative=True)
                 print("self.out[%d]:\n" % k, self.out[k])
