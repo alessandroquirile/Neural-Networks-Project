@@ -51,6 +51,13 @@ class NeuralNetwork:
                 layer.back_prop()
                 print("")
 
+        """# Modo equivalent per andare dall'output all'input escludendo quest'ultimo
+        # Tiene traccia anche del layer successivo ad ognuno, per la BP2
+        for layer, succ_layer in zip(self.layers[-2::-1], self.layers[::-1]):
+            if layer.type != "input":
+                layer.back_prop(succ_layer)
+                print("")"""
+
 
 class Layer:
     """Un layer è composto da uno o più neuroni, una funzione di attivazione unica, matrice di pesi in ingresso
@@ -65,6 +72,7 @@ class Layer:
         self.type = type
         # self.is_input = is_input
         self.activation = activation
+        self.deltas = []  # lista dei delta di ciascun neurone in questo layer
 
     # Inizializza la matrice dei pesi ed il vettore dei bias
     def init_parameters(self, prev_layer_neurons):
@@ -86,28 +94,32 @@ class Layer:
         return self.out
 
     def back_prop(self):
-        # Se il layer è di output
         if self.type == "output":
             for k in range(self.neurons):
                 # Calcolo il delta di ciascun nodo d'uscita k - BP1
-                # enumero i nodi di ciascun layer a partire da 0
-                print("self.wsum[%d]:\n" % k, self.w_sum[k])
-                df_a = self.activation(self.w_sum[k], derivative=True)
-                print("self.out[%d]:\n" % k, self.out[k])
-                print("df_a[%d]:\n" % k, df_a)
-                delta = df_a * (self.out[k] - 1)
-                print("delta[%d]:\n" % k, delta)
-                print("")
+                # print("self.wsum[%d]:\n" % k, self.w_sum[k])  # la a_k nella formula
+                # print("self.out[%d]:\n" % k, self.out[k])  # la z_k = y_k nella formula
+                dg_a = self.activation(self.w_sum[k], derivative=True)  # la g'(a_k) nella formula
+                # print("dg_a[%d]:\n" % k, df_a)
+                delta = dg_a * (self.out[k] - 1)  # delta_k nella formula
+                self.deltas.append(delta)  # salvo ciscun delta_k in una lista di quel layer
+                # print("delta[%d]:\n" % k, delta)
+                # print("")
+            print(self.deltas)
         else:
-            # Se non è né input (escluso dal for esterno), né output è sicuramente hidden
-            # Calcolo del delta di ciascun nodo interno i - BP2
-            pass
+            # Calcolo del delta di ciascun nodo interno h - BP2
+            for h in range(self.neurons):
+                # print("self.wsum[%d]:\n" % h, self.w_sum[h])  # la a_h nella formula
+                df_a = self.activation(self.w_sum[h], derivative=True)  # la f'(a_k) nella formula
+                # print("df_a[%d]:\n" % h, df_a)
+                # Adesso devo iterare su tutti i neuroni dello strato successivo rispetto a quello di h...
+                # ...per calcolarmi la sommatoria
 
 
 if __name__ == '__main__':
     net = NeuralNetwork()
     d = 2  # dimensione dell'input
-    c = 2  # dimensione dell'output
+    c = 1  # dimensione dell'output
 
     for m in (d, 4, 4, c):
         layer = Layer(m)  # costruisco un layer con m neuroni
