@@ -1,4 +1,6 @@
 from activation_functions import *
+from loss_functions import *
+
 
 # dbg purpose
 def show(v):
@@ -25,7 +27,7 @@ class NeuralNetwork:
                     layer.type = "output"
                 else:
                     layer.type = "hidden"
-                layer.init_parameters(self.layers[i - 1].neurons)
+                layer.configure(self.layers[i - 1].neurons)
 
     def summary(self):
         for i, layer in enumerate(self.layers):
@@ -39,7 +41,7 @@ class NeuralNetwork:
             print(layer.bias)
             print("")
 
-    def train(self, x, y):
+    def train(self, x, t):
         z = x.T
         for layer in self.layers:
             z = layer.forward_prop(z)
@@ -49,7 +51,7 @@ class NeuralNetwork:
         for i, layer in enumerate(self.layers[::-1]):
             next_layer = self.layers[-i]
             print("Layer type", layer.type)
-            layer.back_prop(next_layer)
+            layer.back_prop(next_layer, t, local_sum_of_squares)
 
 
 class Layer:
@@ -67,14 +69,19 @@ class Layer:
         self.activation = activation
         self.deltas = []  # lista dei delta di ciascun neurone in questo layer
 
-    # Inizializza la matrice dei pesi ed il vettore dei bias
-    def init_parameters(self, prev_layer_neurons):
+    # Configura parametri e iperparametri del layer:
+    # Matrice dei pesi in ingresso, bias e funzione di attivazione
+    def configure(self, prev_layer_neurons):
         self.weight = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
         self.bias = np.asmatrix(np.ones(self.neurons)).T
         """self.weight = np.asmatrix(np.random.normal(0, 0.5, (self.neurons, prev_layer_neurons)))
         self.bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T  # vettore colonna"""
         if self.activation is None:
-            self.activation = sigmoid
+            # th approx universale
+            if self.type == "hidden":
+                self.activation = sigmoid
+            elif self.type == "output":
+                self.activation = identity
 
     def forward_prop(self, x):
         # Se il layer è di input, si fa un un mirroring del vettore in ingresso
@@ -86,7 +93,7 @@ class Layer:
         # show(self.out)  # dbg
         return self.out
 
-    def back_prop(self, next_layer):
+    def back_prop(self, next_layer, t, local_loss):
         # Il layer di input è escluso dalla back-prop
         if self.type == "input":
             pass
@@ -96,7 +103,8 @@ class Layer:
                 # print("self.wsum[%d]:\n" % k, self.w_sum[k])  # la a_k nella formula
                 # print("self.out[%d]:\n" % k, self.out[k])  # la z_k = y_k nella formula
                 dg_a = self.activation(self.w_sum[k], derivative=True)  # la g'(a_k) nella formula
-                delta_k = dg_a * (self.out[k] - 1)  # delta_k nella formula TODO: generalizzare alle altre loss
+                # delta_k = dg_a * (self.out[k] - t)  # delta_k nella formula - SOLO SE SUM-OF-SQUARES!
+                delta_k = dg_a * local_loss(c, t, self.out[k], derivative=True)  # regola generale
                 self.deltas.append(delta_k)  # salvo ciscun delta_k in una lista di quel layer
         else:
             # Calcolo del delta di ciascun nodo interno h - BP2
@@ -136,6 +144,6 @@ if __name__ == '__main__':
         [1, 0],
         [1, 1]
     ])
-    y = np.asarray([0, 0, 1, 0])
+    t = np.asarray([0, 0, 1, 0])
 
-    net.train(X[2], y[2])  # [1,0], 1
+    net.train(X[2], t[2])  # [1,0], 1

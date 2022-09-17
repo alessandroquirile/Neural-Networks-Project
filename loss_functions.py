@@ -1,6 +1,7 @@
 # Dare la possibilità di usare almeno la sum-of-squares oppure la cross-entropy con e senza soft-max
 import numpy as np
 
+# sum-of-squares che si riferisce all'istanza n-esima
 def local_sum_of_squares(c, t, y, derivative=False):
     ret = 0
     for k in range(c):
