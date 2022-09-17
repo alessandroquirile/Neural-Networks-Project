@@ -30,12 +30,12 @@ class NeuralNetwork:
 
     def summary(self):
         for i, layer in enumerate(self.layers):
-            print("Layer", i)
+            print("Layer", i)  # layer id
             print("neurons:", layer.neurons)
             print("type:", layer.type)
             print("act:", layer.activation)
             print("weight:", np.shape(layer.weight))
-            print(layer.weight)
+            print(layer.weight)  # input weight matrix
             print("bias:", np.shape(layer.bias))
             print(layer.bias)
             print("")
@@ -45,18 +45,12 @@ class NeuralNetwork:
         for layer in self.layers:
             z = layer.forward_prop(z)
 
-        # va dall'output all'input, escludendolo
-        for layer in reversed(self.layers):
-            if layer.type != "input":
-                layer.back_prop()
-                print("")
-
-        """# Modo equivalent per andare dall'output all'input escludendo quest'ultimo
+        # Back-propagation
         # Tiene traccia anche del layer successivo ad ognuno, per la BP2
-        for layer, succ_layer in zip(self.layers[-2::-1], self.layers[::-1]):
-            if layer.type != "input":
-                layer.back_prop(succ_layer)
-                print("")"""
+        for i, layer in enumerate(self.layers[::-1]):
+            next_layer = self.layers[-i]
+            print("Layer type", layer.type)
+            layer.back_prop(next_layer)
 
 
 class Layer:
@@ -93,27 +87,34 @@ class Layer:
         # show(self.out)  # dbg
         return self.out
 
-    def back_prop(self):
-        if self.type == "output":
+    def back_prop(self, next_layer):
+        # Il layer di input è escluso dalla back-prop
+        if self.type == "input":
+            pass
+        elif self.type == "output":
             for k in range(self.neurons):
                 # Calcolo il delta di ciascun nodo d'uscita k - BP1
                 # print("self.wsum[%d]:\n" % k, self.w_sum[k])  # la a_k nella formula
                 # print("self.out[%d]:\n" % k, self.out[k])  # la z_k = y_k nella formula
                 dg_a = self.activation(self.w_sum[k], derivative=True)  # la g'(a_k) nella formula
-                # print("dg_a[%d]:\n" % k, df_a)
-                delta = dg_a * (self.out[k] - 1)  # delta_k nella formula
-                self.deltas.append(delta)  # salvo ciscun delta_k in una lista di quel layer
-                # print("delta[%d]:\n" % k, delta)
-                # print("")
-            print(self.deltas)
+                delta_k = dg_a * (self.out[k] - 1)  # delta_k nella formula TODO: generalizzare alle altre loss
+                self.deltas.append(delta_k)  # salvo ciscun delta_k in una lista di quel layer
         else:
             # Calcolo del delta di ciascun nodo interno h - BP2
             for h in range(self.neurons):
-                # print("self.wsum[%d]:\n" % h, self.w_sum[h])  # la a_h nella formula
-                df_a = self.activation(self.w_sum[h], derivative=True)  # la f'(a_k) nella formula
-                # print("df_a[%d]:\n" % h, df_a)
-                # Adesso devo iterare su tutti i neuroni dello strato successivo rispetto a quello di h...
-                # ...per calcolarmi la sommatoria
+                # print("h:", h)
+                df_a = self.activation(self.w_sum[h], derivative=True)  # la f'(a_h) nella formula
+                sommatoria = 0
+                for k in range(next_layer.neurons):
+                    for w_kh in next_layer.weight[:, h]:
+                        sommatoria += w_kh * next_layer.deltas[k]
+                delta_h = df_a * sommatoria
+                self.deltas.append(delta_h)
+
+        # Stampo i deltas di ciascun layer
+        print("deltas:")
+        print(self.deltas)
+        print("")
 
 
 if __name__ == '__main__':
