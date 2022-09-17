@@ -1,6 +1,5 @@
 from activation_functions import *
 
-
 # dbg purpose
 def show(v):
     print("Shape is", np.shape(v))
