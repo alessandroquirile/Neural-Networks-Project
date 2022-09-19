@@ -101,17 +101,18 @@ class Layer:
             self.dact_a = self.activation(self.w_sum, derivative=True)  # la g'(a) nella formula, per ogni k nel layer
             self.deltas = np.multiply(self.dact_a, local_loss(c, t, self.out, derivative=True))
         else:
-            # BP2
+            # BP2 - todo: forse occorre aggiungere anche il bias
             self.dact_a = self.activation(self.w_sum, derivative=True)
             self.deltas = np.multiply(self.dact_a, np.dot(next_layer.weight.T, next_layer.deltas))
 
+        """# dbg
         print("deltas:")
         print(self.deltas)
-        print("")
+        print("")"""
 
         # Una volta calcolati i delta dei nodi di output e quelli interni, occorre calcolare
-        # La derivata della funzione E rispetto al generico peso wij [formula 1.5]
-        # Sull'istanza n-esima
+        # La derivata della funzione E rispetto al generico peso wij [formula 1.5] sull'istanza n-esima
+        # Quindi costruisco una matrice di derivate una per ogni matrice di pesi
 
 
 if __name__ == '__main__':
