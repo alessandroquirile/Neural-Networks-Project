@@ -11,7 +11,7 @@ def sigmoid(a, derivative=False):
 
 def identity(a, derivative=False):
     f = a
-    df = 1
+    df = np.ones(np.shape(a))
     if derivative:
         return df
     return f

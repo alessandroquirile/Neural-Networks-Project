@@ -50,8 +50,9 @@ class NeuralNetwork:
         # Tiene traccia anche del layer successivo ad ognuno, per la BP2
         for i, layer in enumerate(self.layers[::-1]):
             next_layer = self.layers[-i]
-            print("Layer type", layer.type)
+            print("Layer[%d] type:" % i, layer.type)
             layer.back_prop(next_layer, t, local_sum_of_squares)
+            print("----")
 
 
 class Layer:
@@ -59,15 +60,15 @@ class Layer:
     e bias"""
 
     def __init__(self, neurons, type=None, activation=None):
+        self.dact_a = None
         self.out = None
         self.weight = None
         self.bias = None
         self.w_sum = None
         self.neurons = neurons
         self.type = type
-        # self.is_input = is_input
         self.activation = activation
-        self.deltas = []  # lista dei delta di ciascun neurone in questo layer
+        self.deltas = None
 
     # Configura parametri e iperparametri del layer:
     # Matrice dei pesi in ingresso, bias e funzione di attivazione
@@ -90,38 +91,28 @@ class Layer:
         else:
             self.w_sum = np.dot(self.weight, x) + self.bias
             self.out = self.activation(self.w_sum)
-        # show(self.out)  # dbg
         return self.out
 
     def back_prop(self, next_layer, t, local_loss):
-        # Il layer di input è escluso dalla back-prop
         if self.type == "input":
             pass
         elif self.type == "output":
-            for k in range(self.neurons):
-                # Calcolo il delta di ciascun nodo d'uscita k - BP1
-                # print("self.wsum[%d]:\n" % k, self.w_sum[k])  # la a_k nella formula
-                # print("self.out[%d]:\n" % k, self.out[k])  # la z_k = y_k nella formula
-                dg_a = self.activation(self.w_sum[k], derivative=True)  # la g'(a_k) nella formula
-                # delta_k = dg_a * (self.out[k] - t)  # delta_k nella formula - SOLO SE SUM-OF-SQUARES!
-                delta_k = dg_a * local_loss(c, t, self.out[k], derivative=True)  # regola generale
-                self.deltas.append(delta_k)  # salvo ciscun delta_k in una lista di quel layer
+            # BP1
+            self.dact_a = self.activation(self.w_sum, derivative=True)  # la g'(a) nella formula, per ogni k nel layer
+            self.deltas = np.multiply(self.dact_a, local_loss(c, t, self.out, derivative=True))
         else:
-            # Calcolo del delta di ciascun nodo interno h - BP2
-            for h in range(self.neurons):
-                # print("h:", h)
-                df_a = self.activation(self.w_sum[h], derivative=True)  # la f'(a_h) nella formula
-                sommatoria = 0
-                for k in range(next_layer.neurons):
-                    for w_kh in next_layer.weight[:, h]:
-                        sommatoria += w_kh * next_layer.deltas[k]
-                delta_h = df_a * sommatoria
-                self.deltas.append(delta_h)
+            # BP2
+            self.dact_a = self.activation(self.w_sum, derivative=True)
+            sommatoria = np.dot(next_layer.weight.T, next_layer.deltas)
+            self.deltas = np.multiply(self.dact_a, sommatoria)
 
-        # Stampo i deltas di ciascun layer
         print("deltas:")
         print(self.deltas)
         print("")
+
+        # Una volta calcolati i delta dei nodi di output e quelli interni, occorre calcolare
+        # La derivata della funzione E rispetto al generico peso wij [formula 1.5]
+        # Sull'istanza n-esima
 
 
 if __name__ == '__main__':
