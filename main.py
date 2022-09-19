@@ -103,8 +103,7 @@ class Layer:
         else:
             # BP2
             self.dact_a = self.activation(self.w_sum, derivative=True)
-            sommatoria = np.dot(next_layer.weight.T, next_layer.deltas)
-            self.deltas = np.multiply(self.dact_a, sommatoria)
+            self.deltas = np.multiply(self.dact_a, np.dot(next_layer.weight.T, next_layer.deltas))
 
         print("deltas:")
         print(self.deltas)
