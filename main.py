@@ -2,15 +2,7 @@ from activation_functions import *
 from loss_functions import *
 
 
-# dbg purpose
-def show(v):
-    print("Shape is", np.shape(v))
-    print(v)
-    print("")
-
-
 class NeuralNetwork:
-    """Una rete neurale è composta da uno o più layer"""
 
     def __init__(self):
         self.layers = []
@@ -48,27 +40,28 @@ class NeuralNetwork:
 
         # Back-propagation
         # Tiene traccia anche del layer successivo ad ognuno, per la BP2
-        for i, layer in enumerate(self.layers[::-1]):
-            next_layer = self.layers[-i]
+        # E di quello precedente, per il calcolo dE/dW
+        for i, layer in enumerate(self.layers[:0:-1]):
+            next_layer = self.layers[-i]  # quello sulla destra
+            prev_layer = self.layers[-i - 2]  # quello sulla sinistra
             print("Layer[%d] type:" % i, layer.type)
-            layer.back_prop(next_layer, t, local_sum_of_squares)
+            layer.back_prop(next_layer, prev_layer, t, local_sum_of_squares)
             print("----")
 
 
 class Layer:
-    """Un layer è composto da uno o più neuroni, una funzione di attivazione unica, matrice di pesi in ingresso
-    e bias"""
 
     def __init__(self, neurons, type=None, activation=None):
-        self.dact_a = None
-        self.out = None
-        self.weight = None
-        self.bias = None
-        self.w_sum = None
-        self.neurons = neurons
-        self.type = type
-        self.activation = activation
-        self.deltas = None
+        self.dE_dW = None  # matrice di derivate dE/dW dove W è la matrice del layer
+        self.dact_a = None  # derivata della funzione di attivazione nel punto a
+        self.out = None  # matrice di output per il layer
+        self.weight = None  # matrice di pesi in ingresso
+        self.bias = None  # bias nel layer
+        self.w_sum = None  # matrice delle somme pesate
+        self.neurons = neurons  # numero di neuroni nel layer
+        self.type = type  # se il layer è input, hidden o output
+        self.activation = activation  # funzione di attivazione associata al layer
+        self.deltas = None  # vettore colonna di delta
 
     # Configura parametri e iperparametri del layer:
     # Matrice dei pesi in ingresso, bias e funzione di attivazione
@@ -84,16 +77,16 @@ class Layer:
             elif self.type == "output":
                 self.activation = identity
 
-    def forward_prop(self, x):
+    def forward_prop(self, z):
         # Se il layer è di input, si fa un un mirroring del vettore in ingresso
         if self.type == "input":
-            self.out = x
+            self.out = z
         else:
-            self.w_sum = np.dot(self.weight, x) + self.bias
+            self.w_sum = np.dot(self.weight, z) + self.bias
             self.out = self.activation(self.w_sum)
         return self.out
 
-    def back_prop(self, next_layer, t, local_loss):
+    def back_prop(self, next_layer, prev_layer, t, local_loss):
         if self.type == "input":
             pass
         elif self.type == "output":
@@ -105,14 +98,20 @@ class Layer:
             self.dact_a = self.activation(self.w_sum, derivative=True)
             self.deltas = np.multiply(self.dact_a, np.dot(next_layer.weight.T, next_layer.deltas))
 
-        """# dbg
-        print("deltas:")
-        print(self.deltas)
-        print("")"""
-
         # Una volta calcolati i delta dei nodi di output e quelli interni, occorre calcolare
         # La derivata della funzione E rispetto al generico peso wij [formula 1.5] sull'istanza n-esima
-        # Quindi costruisco una matrice di derivate una per ogni matrice di pesi
+        # Quindi costruisco una matrice di derivate una per ogni matrice di pesi (quindi una per ogni livello)
+        # Sarà sufficiente moltiplicare (righe per colonne) self.deltas con gli output z del layer a sinistra
+        self.dE_dW = np.dot(self.deltas, prev_layer.out.T)
+
+        # dbg
+        print("deltas:")
+        print(self.deltas)
+        print("prev_layer.out.T:")
+        print(prev_layer.out.T)
+        print("dE/dW:")
+        print(self.dE_dW)
+        print("")
 
 
 if __name__ == '__main__':
