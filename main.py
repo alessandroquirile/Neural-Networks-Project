@@ -52,6 +52,7 @@ class NeuralNetwork:
 class Layer:
 
     def __init__(self, neurons, type=None, activation=None):
+        self.dE_db = None  # matrice di derivate dE/db dove b è il vettore colonna bias
         self.dE_dW = None  # matrice di derivate dE/dW dove W è la matrice del layer
         self.dact_a = None  # derivata della funzione di attivazione nel punto a
         self.out = None  # matrice di output per il layer
@@ -92,10 +93,10 @@ class Layer:
         elif self.type == "output":
             # BP1
             self.dact_a = self.activation(self.w_sum, derivative=True)  # la g'(a) nella formula, per ogni k nel layer
-            self.deltas = np.multiply(self.dact_a, local_loss(c, t, self.out, derivative=True))
+            self.deltas = np.multiply(self.dact_a, local_loss(c, t, self.out, derivative=True))  # cx1
         else:
-            # BP2 - todo: forse occorre aggiungere anche il bias
-            self.dact_a = self.activation(self.w_sum, derivative=True)
+            # BP2
+            self.dact_a = self.activation(self.w_sum, derivative=True)  # mx1
             self.deltas = np.multiply(self.dact_a, np.dot(next_layer.weight.T, next_layer.deltas))
 
         # Una volta calcolati i delta dei nodi di output e quelli interni, occorre calcolare
@@ -104,13 +105,19 @@ class Layer:
         # Sarà sufficiente moltiplicare (righe per colonne) self.deltas con gli output z del layer a sinistra
         self.dE_dW = np.dot(self.deltas, prev_layer.out.T)
 
+        # Per ogni layer: dE/db = dE/da * da/db = dE/da * 1 = dE/da = delta
+        # Quindi la derivata di E risp. al vettore colonna bias è self.delta
+        self.dE_db = self.deltas
+
         # dbg
-        print("deltas:")
+        print("deltas shape:", np.shape(self.deltas))
         print(self.deltas)
-        print("prev_layer.out.T:")
+        print("prev_layer.out.T shape:", np.shape(prev_layer.out.T))
         print(prev_layer.out.T)
-        print("dE/dW:")
+        print("dE/dW shape:", np.shape(self.dE_dW))
         print(self.dE_dW)
+        print("dE/db shape:", np.shape(self.dE_db))
+        print(self.dE_db)
         print("")
 
 
