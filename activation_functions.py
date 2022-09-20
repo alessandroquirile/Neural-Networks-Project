@@ -18,8 +18,8 @@ def identity(a, derivative=False):
 
 
 def relu(a, derivative=False):
-    f = a if a > 0 else 0
-    df = 1 if a > 0 else 0 if a < 0 else None
+    f = np.maximum(0, a)
+    df = (a > 0) * 1
     if derivative:
         return df
     return f
