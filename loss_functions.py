@@ -2,7 +2,7 @@
 import numpy as np
 
 
-# sum-of-squares che si riferisce all'istanza n-esima
+# sum-of-squares locale all'istanza n-esima
 def local_sum_of_squares(c, t, y, derivative=False):
     ret = 0
     for k in range(c):

@@ -33,11 +33,15 @@ class NeuralNetwork:
             print(layer.bias)
             print("")
 
-    def train(self, x, t):
-        z = x.T
-        for layer in self.layers:
-            z = layer.forward_prop(z)
+    def train(self, x, target):
+        self.forward_prop(x.T)
+        self.back_prop(target, local_sum_of_squares)
 
+    def forward_prop(self, z):
+        for layer in self.layers:
+            z = layer.forward_prop_step(z)
+
+    def back_prop(self, target, local_loss):
         # Back-propagation
         # Tiene traccia anche del layer successivo ad ognuno, per la BP2
         # E di quello precedente, per il calcolo dE/dW
@@ -45,7 +49,7 @@ class NeuralNetwork:
             next_layer = self.layers[-i]  # quello sulla destra
             prev_layer = self.layers[-i - 2]  # quello sulla sinistra
             print("Layer[%d] type:" % i, layer.type)
-            layer.back_prop(next_layer, prev_layer, t, local_sum_of_squares)
+            layer.back_prop_step(next_layer, prev_layer, target, local_loss)
             print("----")
 
 
@@ -64,8 +68,6 @@ class Layer:
         self.activation = activation  # funzione di attivazione associata al layer
         self.deltas = None  # vettore colonna di delta
 
-    # Configura parametri e iperparametri del layer:
-    # Matrice dei pesi in ingresso, bias e funzione di attivazione
     def configure(self, prev_layer_neurons):
         self.weight = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
         self.bias = np.asmatrix(np.ones(self.neurons)).T
@@ -78,7 +80,7 @@ class Layer:
             elif self.type == "output":
                 self.activation = identity
 
-    def forward_prop(self, z):
+    def forward_prop_step(self, z):
         # Se il layer è di input, si fa un un mirroring del vettore in ingresso
         if self.type == "input":
             self.out = z
@@ -87,7 +89,7 @@ class Layer:
             self.out = self.activation(self.w_sum)
         return self.out
 
-    def back_prop(self, next_layer, prev_layer, t, local_loss):
+    def back_prop_step(self, next_layer, prev_layer, t, local_loss):
         if self.type == "input":
             pass
         elif self.type == "output":
@@ -106,7 +108,7 @@ class Layer:
         self.dE_dW = np.dot(self.deltas, prev_layer.out.T)
 
         # Per ogni layer: dE/db = dE/da * da/db = dE/da * 1 = dE/da = delta
-        # Quindi la derivata di E risp. al vettore colonna bias è self.delta
+        # Quindi la derivata di E risp. al vettore colonna bias è self.deltas
         self.dE_db = self.deltas
 
         # dbg
