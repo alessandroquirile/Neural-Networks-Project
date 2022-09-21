@@ -33,9 +33,17 @@ class NeuralNetwork:
             print(layer.bias)
             print("")
 
-    def train(self, x, target):
-        self.forward_prop(x.T)
-        self.back_prop(target, local_sum_of_squares)
+    def train(self, X, targets):
+        # La fase di learn dovrà seguire un approccio batch per permettere l'applicazione della RProp come
+        # algoritmo di aggiornamento dei pesi
+        # Bisogna quindi tener conto di MAX_EPOCHS e della taglia del dataset
+        MAX_EPOCHS = 1
+        for epoch in range(MAX_EPOCHS):
+            for i, x in enumerate(X):
+                target = targets[i]
+                self.forward_prop(x.T)
+                self.back_prop(target, local_sum_of_squares)
+            self.learning_rule(l_rate=0.05)  # fuori dal for, batch mode
 
     def forward_prop(self, z):
         for layer in self.layers:
@@ -48,16 +56,25 @@ class NeuralNetwork:
         for i, layer in enumerate(self.layers[:0:-1]):
             next_layer = self.layers[-i]  # quello sulla destra
             prev_layer = self.layers[-i - 2]  # quello sulla sinistra
-            print("Layer[%d] type:" % i, layer.type)
+            # print("Layer[%d] type:" % i, layer.type)
             layer.back_prop_step(next_layer, prev_layer, target, local_loss)
-            print("----")
+            # print("")
+
+    def learning_rule(self, l_rate):
+        # Uso la GD
+        for layer in self.layers:
+            if layer.type != "input":
+                layer.weight -= l_rate * layer.dE_dW
+                layer.bias -= l_rate * layer.dE_db
 
 
 class Layer:
 
     def __init__(self, neurons, type=None, activation=None):
-        self.dE_db = None  # matrice di derivate dE/db dove b è il vettore colonna bias
-        self.dE_dW = None  # matrice di derivate dE/dW dove W è la matrice del layer
+        self.dE_dW = 0  # matrice di derivate dE/dW dove W è la matrice del layer sull'intero DS
+        self.dE_db = 0  # matrice di derivate dE/db dove b è il vettore colonna bias sull'intero DS
+        self.dEn_db = None  # matrice di derivate dE^(n)/db dove b è il vettore colonna bias sull'item n-esimo
+        self.dEn_dW = None  # matrice di derivate dE^(n)/dW dove W è la matrice del layer sull'item n-esimo
         self.dact_a = None  # derivata della funzione di attivazione nel punto a
         self.out = None  # matrice di output per il layer
         self.weight = None  # matrice di pesi in ingresso
@@ -105,22 +122,33 @@ class Layer:
         # La derivata della funzione E rispetto al generico peso wij [formula 1.5] sull'istanza n-esima
         # Quindi costruisco una matrice di derivate una per ogni matrice di pesi (quindi una per ogni livello)
         # Sarà sufficiente moltiplicare (righe per colonne) self.deltas con gli output z del layer a sinistra
-        self.dE_dW = np.dot(self.deltas, prev_layer.out.T)
+        self.dEn_dW = np.dot(self.deltas, prev_layer.out.T)
+
+        # La derivata dE/dW sull'intero DS è la somma per n=1 a N di dE/dW sul singolo item
+        self.dE_dW += self.dEn_dW
 
         # Per ogni layer: dE/db = dE/da * da/db = dE/da * 1 = dE/da = delta
         # Quindi la derivata di E risp. al vettore colonna bias è self.deltas
-        self.dE_db = self.deltas
+        self.dEn_db = self.deltas
+
+        # La derivata dE/db sull'intero DS è la somma per n=1 a N di dE/db sul singolo item
+        self.dE_db += self.dEn_db
 
         # dbg
-        print("deltas shape:", np.shape(self.deltas))
+        """print("deltas shape:", np.shape(self.deltas))
         print(self.deltas)
         print("prev_layer.out.T shape:", np.shape(prev_layer.out.T))
-        print(prev_layer.out.T)
-        print("dE/dW shape:", np.shape(self.dE_dW))
+        print(prev_layer.out.T)"""
+
+        """print("dE/dW shape:", np.shape(self.dE_dW))  # dE/dW sull'n-esima istanza
         print(self.dE_dW)
-        print("dE/db shape:", np.shape(self.dE_db))
+        print("dE/db shape:", np.shape(self.dE_db))  # dE/db sull'n-esima istanza
         print(self.dE_db)
-        print("")
+        print("dE/dW_tot shape:", np.shape(self.dE_dW_tot))  # dE/dW
+        print(self.dE_dW_tot)
+        print("dE/db_tot shape:", np.shape(self.dE_db_tot))  # dE/db
+        print(self.dE_db_tot)
+        print("")"""
 
 
 if __name__ == '__main__':
@@ -137,12 +165,21 @@ if __name__ == '__main__':
     # net.summary()  # dbg
 
     # Training set
-    X = np.asmatrix([
+    """X = np.asmatrix([
         [0, 0],
         [0, 1],
         [1, 0],
         [1, 1]
     ])
     t = np.asarray([0, 0, 1, 0])
+    
+    net.train(X[2], t[2])  # [1,0], 1"""
 
-    net.train(X[2], t[2])  # [1,0], 1
+    X = np.asmatrix([
+        [1, 0],
+        [50, 100]
+    ])
+
+    targets = np.asarray([1, 0])
+
+    net.train(X, targets)  # gli passo X e i targets interi, del training set

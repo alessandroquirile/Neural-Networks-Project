@@ -12,7 +12,6 @@ def local_sum_of_squares(c, t, y, derivative=False):
         return y - t
     return ret
 
-
 def sum_of_squares(N, c, t, y):
     ret = 0
     for n in range(N):
@@ -24,5 +23,5 @@ def sum_of_squares(N, c, t, y):
 def cross_entropy(c, t, y):
     ret = 0
     for k in range(c):
-        ret += t * np.log(y)
+        ret += np.multiply(t, np.log(y))
     return -ret
