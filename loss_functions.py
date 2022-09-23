@@ -1,4 +1,4 @@
-from post_processing import *
+from post_processing_functions import *
 
 
 def sum_of_squares(y, t, derivative=False):

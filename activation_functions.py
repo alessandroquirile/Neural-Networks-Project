@@ -10,16 +10,16 @@ def sigmoid(a, derivative=False):
 
 
 def identity(a, derivative=False):
-    f = a
-    df = np.ones(np.shape(a))
+    f_a = a
+    df_a = np.ones(np.shape(a))
     if derivative:
-        return df
-    return f
+        return df_a
+    return f_a
 
 
 def relu(a, derivative=False):
-    f = np.maximum(0, a)
-    df = (a > 0) * 1
+    f_a = np.maximum(0, a)
+    df_a = (a > 0) * 1
     if derivative:
-        return df
-    return f
+        return df_a
+    return f_a
