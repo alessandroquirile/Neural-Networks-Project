@@ -34,20 +34,26 @@ class NeuralNetwork:
             print("")
 
     def train(self, X, targets):
-        # La fase di learn dovrà seguire un approccio batch per permettere l'applicazione della RProp come
-        # algoritmo di aggiornamento dei pesi
-        # Bisogna quindi tener conto di MAX_EPOCHS e della taglia del dataset
-        MAX_EPOCHS = 1
+        # batch mode
+        MAX_EPOCHS = 20
+        loss_function = cross_entropy
+        E = 0  # errore sull'intero DS
         for epoch in range(MAX_EPOCHS):
             for i, x in enumerate(X):
                 target = targets[i]
-                self.forward_prop(x.T)
-                self.back_prop(target, local_sum_of_squares)
-            self.learning_rule(l_rate=0.05)  # fuori dal for, batch mode
+                prediction = self.forward_prop(x.T)
+                E_n = loss_function(prediction, target)
+                E += E_n  # calcolato correttamente
+                self.back_prop(target, local_loss=loss_function)
+            print("E(%d) on TrS is:" % epoch, E)
+            self.learning_rule(l_rate=0.01)  # in batch mode il l_rate è più piccolo dell'online
+
+        # infine scelgo la rete che minimizza l'errore sul VS
 
     def forward_prop(self, z):
         for layer in self.layers:
             z = layer.forward_prop_step(z)
+        return z  # output della rete
 
     def back_prop(self, target, local_loss):
         # Back-propagation
@@ -66,6 +72,9 @@ class NeuralNetwork:
             if layer.type != "input":
                 layer.weight -= l_rate * layer.dE_dW
                 layer.bias -= l_rate * layer.dE_db
+                """print(layer.type)
+                print(layer.weight)
+                print("")"""
 
 
 class Layer:
@@ -88,8 +97,8 @@ class Layer:
     def configure(self, prev_layer_neurons):
         self.weight = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
         self.bias = np.asmatrix(np.ones(self.neurons)).T
-        """self.weight = np.asmatrix(np.random.normal(0, 0.5, (self.neurons, prev_layer_neurons)))
-        self.bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T  # vettore colonna"""
+        self.weight = np.asmatrix(np.random.normal(0, 0.5, (self.neurons, prev_layer_neurons)))
+        self.bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T  # vettore colonna
         if self.activation is None:
             # th approx universale
             if self.type == "hidden":
@@ -106,13 +115,13 @@ class Layer:
             self.out = self.activation(self.w_sum)
         return self.out
 
-    def back_prop_step(self, next_layer, prev_layer, t, local_loss):
+    def back_prop_step(self, next_layer, prev_layer, target, local_loss):
         if self.type == "input":
             pass
         elif self.type == "output":
             # BP1
             self.dact_a = self.activation(self.w_sum, derivative=True)  # la g'(a) nella formula, per ogni k nel layer
-            self.deltas = np.multiply(self.dact_a, local_loss(c, t, self.out, derivative=True))  # cx1
+            self.deltas = np.multiply(self.dact_a, local_loss(self.out, target, derivative=True))  # cx1
         else:
             # BP2
             self.dact_a = self.activation(self.w_sum, derivative=True)  # mx1
@@ -122,17 +131,20 @@ class Layer:
         # La derivata della funzione E rispetto al generico peso wij [formula 1.5] sull'istanza n-esima
         # Quindi costruisco una matrice di derivate una per ogni matrice di pesi (quindi una per ogni livello)
         # Sarà sufficiente moltiplicare (righe per colonne) self.deltas con gli output z del layer a sinistra
-        self.dEn_dW = np.dot(self.deltas, prev_layer.out.T)
-
-        # La derivata dE/dW sull'intero DS è la somma per n=1 a N di dE/dW sul singolo item
-        self.dE_dW += self.dEn_dW
+        self.dEn_dW = self.deltas * prev_layer.out.T
 
         # Per ogni layer: dE/db = dE/da * da/db = dE/da * 1 = dE/da = delta
         # Quindi la derivata di E risp. al vettore colonna bias è self.deltas
         self.dEn_db = self.deltas
 
+        # La derivata dE/dW sull'intero DS è la somma per n=1 a N di dE/dW sul singolo item
+        self.dE_dW += self.dEn_dW
+
         # La derivata dE/db sull'intero DS è la somma per n=1 a N di dE/db sul singolo item
         self.dE_db += self.dEn_db
+
+        """print(self.dE_dW) # dbg
+        print("")"""
 
         # dbg
         """print("deltas shape:", np.shape(self.deltas))
@@ -177,9 +189,11 @@ if __name__ == '__main__':
 
     X = np.asmatrix([
         [1, 0],
-        [50, 100]
+        [1, 1],
+        [0, 1],
+        [0, 0]
     ])
 
-    targets = np.asarray([1, 0])
+    targets = np.asarray([1, 0, 0, 0])
 
     net.train(X, targets)  # gli passo X e i targets interi, del training set

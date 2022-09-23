@@ -3,25 +3,24 @@ import numpy as np
 
 
 # sum-of-squares locale all'istanza n-esima
-def local_sum_of_squares(c, t, y, derivative=False):
-    ret = 0
-    for k in range(c):
-        ret += np.square(y - t)
-    ret = 1 / 2 * ret
+def sum_of_squares(y, t, derivative=False):
     if derivative:
         return y - t
-    return ret
+    return 0.5 * np.sum(np.sum(np.square((y - t))))
 
-def sum_of_squares(N, c, t, y):
-    ret = 0
-    for n in range(N):
-        ret += local_sum_of_squares(c, t, y)
-    return ret
+
+# aggiungere la versione con soft-max
+def cross_entropy(y, t, derivative=False):
+    if derivative:
+        return -np.sum(np.divide(t, y), axis=1)
+    return -np.sum(np.sum(np.multiply(t, np.log(y)), axis=0))
 
 
 # Da aggiungere la versione con soft-max e la derivata
-def cross_entropy(c, t, y):
+"""def cross_entropy(c, t, y, derivative=False):
     ret = 0
     for k in range(c):
         ret += np.multiply(t, np.log(y))
-    return -ret
+    if derivative:
+        pass
+    return -ret"""
