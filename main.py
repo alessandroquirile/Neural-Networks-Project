@@ -55,6 +55,7 @@ class NeuralNetwork:
 
     def back_prop(self, target, local_loss):
         # Back-propagation
+        # Scarta il layer di input che non è coinvolto nella procedura
         # Tiene traccia anche del layer successivo ad ognuno, per la BP2
         # E di quello precedente, per il calcolo dE/dW
         for i, layer in enumerate(self.layers[:0:-1]):
@@ -71,7 +72,7 @@ class NeuralNetwork:
                 layer.weights -= l_rate * layer.dE_dW
                 layer.bias -= l_rate * layer.dE_db
                 """print(layer.type)
-                print(layer.weight)
+                print(layer.weights)
                 print("")"""
 
 
@@ -114,9 +115,7 @@ class Layer:
         return self.out
 
     def back_prop_step(self, next_layer, prev_layer, target, local_loss):
-        if self.type == "input":
-            pass
-        elif self.type == "output":
+        if self.type == "output":
             # BP1
             self.dact_a = self.activation(self.w_sum, derivative=True)  # la g'(a) nella formula, per ogni k nel layer
             self.deltas = np.multiply(self.dact_a, local_loss(self.out, target, derivative=True))  # cx1

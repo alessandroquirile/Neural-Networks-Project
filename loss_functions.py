@@ -11,8 +11,8 @@ def cross_entropy(y, t, derivative=False, post_process=False):
     if post_process:
         if derivative:
             return y - t
-        return -np.sum(np.sum(np.multiply(t, np.log(soft_max(y))), axis=0))
+        return -np.sum(np.sum(np.multiply(t, np.log(soft_max(y))), axis=0))  # axis=0 somma di elementi per colonne
     else:
         if derivative:
-            return -np.sum(np.divide(t, y), axis=1)
+            return -np.sum(np.divide(t, y), axis=1)  # axis=1 somma di elementi per righe
         return -np.sum(np.sum(np.multiply(t, np.log(y)), axis=0))
