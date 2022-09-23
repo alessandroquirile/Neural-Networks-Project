@@ -27,8 +27,8 @@ class NeuralNetwork:
             print("neurons:", layer.neurons)
             print("type:", layer.type)
             print("act:", layer.activation)
-            print("weight:", np.shape(layer.weight))
-            print(layer.weight)  # input weight matrix
+            print("weights:", np.shape(layer.weights))
+            print(layer.weights)  # input weight matrix
             print("bias:", np.shape(layer.bias))
             print(layer.bias)
             print("")
@@ -47,8 +47,6 @@ class NeuralNetwork:
                 self.back_prop(target, local_loss=loss_function)
             print("E(%d) on TrS is:" % epoch, E)
             self.learning_rule(l_rate=0.01)  # in batch mode il l_rate è più piccolo dell'online
-
-        # infine scelgo la rete che minimizza l'errore sul VS
 
     def forward_prop(self, z):
         for layer in self.layers:
@@ -70,7 +68,7 @@ class NeuralNetwork:
         # Uso la GD
         for layer in self.layers:
             if layer.type != "input":
-                layer.weight -= l_rate * layer.dE_dW
+                layer.weights -= l_rate * layer.dE_dW
                 layer.bias -= l_rate * layer.dE_db
                 """print(layer.type)
                 print(layer.weight)
@@ -86,7 +84,7 @@ class Layer:
         self.dEn_dW = None  # matrice di derivate dE^(n)/dW dove W è la matrice del layer sull'item n-esimo
         self.dact_a = None  # derivata della funzione di attivazione nel punto a
         self.out = None  # matrice di output per il layer
-        self.weight = None  # matrice di pesi in ingresso
+        self.weights = None  # matrice di pesi in ingresso
         self.bias = None  # bias nel layer
         self.w_sum = None  # matrice delle somme pesate
         self.neurons = neurons  # numero di neuroni nel layer
@@ -95,9 +93,9 @@ class Layer:
         self.deltas = None  # vettore colonna di delta
 
     def configure(self, prev_layer_neurons):
-        self.weight = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
-        self.bias = np.asmatrix(np.ones(self.neurons)).T
-        self.weight = np.asmatrix(np.random.normal(0, 0.5, (self.neurons, prev_layer_neurons)))
+        """self.weights = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
+        self.bias = np.asmatrix(np.ones(self.neurons)).T"""
+        self.weights = np.asmatrix(np.random.normal(0, 0.5, (self.neurons, prev_layer_neurons)))
         self.bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T  # vettore colonna
         if self.activation is None:
             # th approx universale
@@ -111,7 +109,7 @@ class Layer:
         if self.type == "input":
             self.out = z
         else:
-            self.w_sum = np.dot(self.weight, z) + self.bias
+            self.w_sum = np.dot(self.weights, z) + self.bias
             self.out = self.activation(self.w_sum)
         return self.out
 
@@ -125,7 +123,7 @@ class Layer:
         else:
             # BP2
             self.dact_a = self.activation(self.w_sum, derivative=True)  # mx1
-            self.deltas = np.multiply(self.dact_a, np.dot(next_layer.weight.T, next_layer.deltas))
+            self.deltas = np.multiply(self.dact_a, np.dot(next_layer.weights.T, next_layer.deltas))
 
         # Una volta calcolati i delta dei nodi di output e quelli interni, occorre calcolare
         # La derivata della funzione E rispetto al generico peso wij [formula 1.5] sull'istanza n-esima
