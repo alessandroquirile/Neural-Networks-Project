@@ -52,7 +52,7 @@ class NeuralNetwork:
                 self.back_prop(target, local_loss=loss_function)
             # epoch_loss.append(E)
             print("E(%d) on TrS is:" % epoch, E)
-            self.learning_rule(epoch, eta_minus=0.5, eta_plus=1.2, minstep=10**-6, maxstep=50)
+            self.learning_rule(epoch, eta_minus=0.5, eta_plus=1.2, minstep=10 ** -6, maxstep=50)
         """df = pd.DataFrame(epoch_loss)
         df_plot = df.plot(kind="line", grid=True).get_figure()
         df_plot.savefig("plot.pdf")"""
@@ -90,6 +90,7 @@ class NeuralNetwork:
 
                 # l'aggiornamento richiede la copia in modo tale che le due variabili puntino a oggetti distinti
                 layer.dE_dW_tprev = np.copy(g_t)
+
 
 class Layer:
 
@@ -188,8 +189,12 @@ class Layer:
         print("")"""
 
     def update_steps(self, epsilon, eta_plus, eta_minus, maxstep, minstep):
-        # epsilon_ij corrisponde a g_ij(t) * g_ij(t-1)
-        for (i, j), epsilon_ij in np.ndenumerate(epsilon):
+        # epsilon corrisponde a g(t) * g(t-1)
+
+        self.step_weights[epsilon > 0] = np.minimum(self.step_weights.A[epsilon > 0] * eta_plus, maxstep)
+        self.step_weights[epsilon < 0] = np.maximum(self.step_weights.A[epsilon < 0] * eta_minus, minstep)
+
+        """for (i, j), epsilon_ij in np.ndenumerate(epsilon):
             if epsilon_ij > 0:
                 # print("Incremento")
                 # print("Before", self.step_weights[i,j])
@@ -200,7 +205,7 @@ class Layer:
                 # print("Before", self.step_weights[i,j])
                 self.step_weights[i, j] = np.maximum(eta_minus * self.step_weights[i, j], minstep)
                 # print("After", self.step_weights[i,j])
-            # print("")
+            # print("")"""
 
 
 if __name__ == '__main__':
