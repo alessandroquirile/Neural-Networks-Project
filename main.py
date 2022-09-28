@@ -31,22 +31,31 @@ class NeuralNetwork:
             print(layer.weights)  # input weight matrix
             print("bias:", np.shape(layer.bias))
             print(layer.bias)
+            print("l_step_weights:", np.shape(layer.step_weights))
+            print(layer.step_weights)
+            print("l_step_bias:", np.shape(layer.step_bias))
+            print(layer.step_bias)
             print("")
 
     def train(self, X, targets):
         # batch mode
-        MAX_EPOCHS = 20
+        MAX_EPOCHS = 5
         loss_function = cross_entropy
         E = 0  # errore sull'intero DS
+        # epoch_loss = []
         for epoch in range(MAX_EPOCHS):
             for i, x in enumerate(X):
                 target = targets[i]
                 prediction = self.forward_prop(x.T)
                 E_n = loss_function(prediction, target)
-                E += E_n  # calcolato correttamente
+                E += E_n
                 self.back_prop(target, local_loss=loss_function)
+            # epoch_loss.append(E)
             print("E(%d) on TrS is:" % epoch, E)
-            self.learning_rule(l_rate=0.01)  # in batch mode il l_rate è più piccolo dell'online
+            self.learning_rule(epoch, eta_minus=0.5, eta_plus=1.2, minstep=10**-6, maxstep=50)
+        """df = pd.DataFrame(epoch_loss)
+        df_plot = df.plot(kind="line", grid=True).get_figure()
+        df_plot.savefig("plot.pdf")"""
 
     def forward_prop(self, z):
         for layer in self.layers:
@@ -65,20 +74,30 @@ class NeuralNetwork:
             layer.back_prop_step(next_layer, prev_layer, target, local_loss)
             # print("")
 
-    def learning_rule(self, l_rate):
-        # Uso la GD
+    def learning_rule(self, epoch, eta_minus, eta_plus, minstep, maxstep):
+        # todo: l'algoritmo va applicato sia per i pesi che per i bias
+
         for layer in self.layers:
             if layer.type != "input":
-                layer.weights -= l_rate * layer.dE_dW
-                layer.bias -= l_rate * layer.dE_db
-                """print(layer.type)
-                print(layer.weights)
-                print("")"""
+                g_t = layer.dE_dW  # dE/dW per il layer corrente, all'epoca t (attuale)
+                g_tprev = layer.dE_dW_tprev  # dE/dW per il layer corrente, all'epoca t-1
 
+                # Aggiorna i Deltaij associati ai pesi
+                layer.update_steps(np.multiply(g_t, g_tprev), eta_plus, eta_minus, maxstep, minstep)
+
+                # Valutare se saltare l'aggiornamento quando e=0 (t=1)
+                layer.weights -= np.multiply(np.sign(g_t), layer.step_weights)
+
+                # l'aggiornamento richiede la copia in modo tale che le due variabili puntino a oggetti distinti
+                layer.dE_dW_tprev = np.copy(g_t)
 
 class Layer:
 
     def __init__(self, neurons, type=None, activation=None):
+        self.dE_dW_tprev = 0  # matrice delle derivate dE/dW all'epoca precedente per la RProp
+        self.step_weights = None  # matrice di Delta maiuscolo associato ad ogni peso per la RProp
+        self.step_bias = None  # matrice di Delta maiuscolo associato ad ogni bias per la RProp
+
         self.dE_dW = 0  # matrice di derivate dE/dW dove W è la matrice del layer sull'intero DS
         self.dE_db = 0  # matrice di derivate dE/db dove b è il vettore colonna bias sull'intero DS
         self.dEn_db = None  # matrice di derivate dE^(n)/db dove b è il vettore colonna bias sull'item n-esimo
@@ -94,10 +113,19 @@ class Layer:
         self.deltas = None  # vettore colonna di delta
 
     def configure(self, prev_layer_neurons):
-        """self.weights = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
-        self.bias = np.asmatrix(np.ones(self.neurons)).T"""
+        """# Solo per dbg
+        self.weights = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
+        self.step_weights = np.asmatrix(np.ones(np.shape(self.weights)))
+        self.dE_dW_tprev = np.zeros(np.shape(self.weights))  # Per la RProp
+        self.bias = np.asmatrix(np.ones(self.neurons)).T
+        self.step_bias = np.asmatrix(np.ones(np.shape(self.neurons))).T"""
+
         self.weights = np.asmatrix(np.random.normal(0, 0.5, (self.neurons, prev_layer_neurons)))
+        self.step_weights = np.asmatrix(np.random.normal(0, 0.5, np.shape(self.weights)))
+        self.dE_dW_tprev = np.zeros(np.shape(self.weights))  # Per la RProp
         self.bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T  # vettore colonna
+        self.step_bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T
+
         if self.activation is None:
             # th approx universale
             if self.type == "hidden":
@@ -159,6 +187,21 @@ class Layer:
         print(self.dE_db_tot)
         print("")"""
 
+    def update_steps(self, epsilon, eta_plus, eta_minus, maxstep, minstep):
+        # epsilon_ij corrisponde a g_ij(t) * g_ij(t-1)
+        for (i, j), epsilon_ij in np.ndenumerate(epsilon):
+            if epsilon_ij > 0:
+                # print("Incremento")
+                # print("Before", self.step_weights[i,j])
+                self.step_weights[i, j] = np.minimum(eta_plus * self.step_weights[i, j], maxstep)
+                # print("After", self.step_weights[i,j])
+            elif epsilon_ij < 0:
+                # print("Decremento")
+                # print("Before", self.step_weights[i,j])
+                self.step_weights[i, j] = np.maximum(eta_minus * self.step_weights[i, j], minstep)
+                # print("After", self.step_weights[i,j])
+            # print("")
+
 
 if __name__ == '__main__':
     net = NeuralNetwork()
@@ -172,17 +215,6 @@ if __name__ == '__main__':
     net.create()
 
     # net.summary()  # dbg
-
-    # Training set
-    """X = np.asmatrix([
-        [0, 0],
-        [0, 1],
-        [1, 0],
-        [1, 1]
-    ])
-    t = np.asarray([0, 0, 1, 0])
-    
-    net.train(X[2], t[2])  # [1,0], 1"""
 
     X = np.asmatrix([
         [1, 0],
