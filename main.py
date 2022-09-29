@@ -77,7 +77,20 @@ class NeuralNetwork:
     def learning_rule(self, epoch, eta_minus, eta_plus, minstep, maxstep):
         # todo: l'algoritmo va applicato sia per i pesi che per i bias
 
-        for layer in self.layers:
+        for layer in [layer for layer in self.layers if layer.type != "input"]:
+            g_t = layer.dE_dW  # dE/dW per il layer corrente, all'epoca t (attuale)
+            g_tprev = layer.dE_dW_tprev  # dE/dW per il layer corrente, all'epoca t-1
+
+            # Aggiorna i Deltaij associati ai pesi
+            layer.update_steps(np.multiply(g_t, g_tprev), eta_plus, eta_minus, maxstep, minstep)
+
+            # Valutare se saltare l'aggiornamento quando e=0 (t=1)
+            layer.weights -= np.multiply(np.sign(g_t), layer.step_weights)
+
+            # l'aggiornamento richiede la copia in modo tale che le due variabili puntino a oggetti distinti
+            layer.dE_dW_tprev = np.copy(g_t)
+
+        """for layer in self.layers:
             if layer.type != "input":
                 g_t = layer.dE_dW  # dE/dW per il layer corrente, all'epoca t (attuale)
                 g_tprev = layer.dE_dW_tprev  # dE/dW per il layer corrente, all'epoca t-1
@@ -89,7 +102,7 @@ class NeuralNetwork:
                 layer.weights -= np.multiply(np.sign(g_t), layer.step_weights)
 
                 # l'aggiornamento richiede la copia in modo tale che le due variabili puntino a oggetti distinti
-                layer.dE_dW_tprev = np.copy(g_t)
+                layer.dE_dW_tprev = np.copy(g_t)"""
 
 
 class Layer:
