@@ -1,5 +1,5 @@
 import numpy as np
 
 
-def soft_max(y):
+def softmax(y):
     return np.exp(y) / np.sum(np.exp(y))
