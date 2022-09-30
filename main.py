@@ -50,9 +50,11 @@ class NeuralNetwork:
                 E_n = loss_function(prediction, target)
                 E += E_n
                 self.back_prop(target, local_loss=loss_function)
-            # epoch_loss.append(E)
-            print("E(%d) on TrS is:" % epoch, E)
             self.learning_rule(epoch, eta_minus=0.5, eta_plus=1.2, minstep=10 ** -6, maxstep=50)
+            print("E(%d) on TrS is:" % epoch, E)
+            # epoch_loss.append(E)
+
+
         """df = pd.DataFrame(epoch_loss)
         df_plot = df.plot(kind="line", grid=True).get_figure()
         df_plot.savefig("plot.pdf")"""
@@ -75,40 +77,30 @@ class NeuralNetwork:
             # print("")
 
     def learning_rule(self, epoch, eta_minus, eta_plus, minstep, maxstep):
-        # todo: l'algoritmo va applicato sia per i pesi che per i bias
-
         for layer in [layer for layer in self.layers if layer.type != "input"]:
-            g_t = layer.dE_dW  # dE/dW per il layer corrente, all'epoca t (attuale)
-            g_tprev = layer.dE_dW_tprev  # dE/dW per il layer corrente, all'epoca t-1
+            g_t_w = layer.dE_dW  # dE/dW per il layer corrente, all'epoca t (attuale)
+            g_tprev_w = layer.dE_dW_tprev  # dE/dW per il layer corrente, all'epoca t-1
+            g_t_b = layer.dE_db  # dE/db per il layer corrente, all'epoca t (attuale)
+            g_tprev_b = layer.dE_db_tprev  # dE/db per il layer corrente, all'epoca t-1
 
-            # Aggiorna i Deltaij associati ai pesi
-            layer.update_steps(np.multiply(g_t, g_tprev), eta_plus, eta_minus, maxstep, minstep)
+            # Aggiorna i Deltaij associati ai pesi e ai bias
+            layer.update_steps_weights(np.multiply(g_t_w, g_tprev_w), eta_plus, eta_minus, maxstep, minstep)
+            layer.update_steps_bias(np.multiply(g_t_b, g_tprev_b), eta_plus, eta_minus, maxstep, minstep)
 
             # Valutare se saltare l'aggiornamento quando e=0 (t=1)
-            layer.weights -= np.multiply(np.sign(g_t), layer.step_weights)
+            layer.weights -= np.multiply(np.sign(g_t_w), layer.step_weights)
+            layer.bias -= np.multiply(np.sign(g_t_b), layer.step_bias)
 
             # l'aggiornamento richiede la copia in modo tale che le due variabili puntino a oggetti distinti
-            layer.dE_dW_tprev = np.copy(g_t)
-
-        """for layer in self.layers:
-            if layer.type != "input":
-                g_t = layer.dE_dW  # dE/dW per il layer corrente, all'epoca t (attuale)
-                g_tprev = layer.dE_dW_tprev  # dE/dW per il layer corrente, all'epoca t-1
-
-                # Aggiorna i Deltaij associati ai pesi
-                layer.update_steps(np.multiply(g_t, g_tprev), eta_plus, eta_minus, maxstep, minstep)
-
-                # Valutare se saltare l'aggiornamento quando e=0 (t=1)
-                layer.weights -= np.multiply(np.sign(g_t), layer.step_weights)
-
-                # l'aggiornamento richiede la copia in modo tale che le due variabili puntino a oggetti distinti
-                layer.dE_dW_tprev = np.copy(g_t)"""
+            layer.dE_dW_tprev = np.copy(g_t_w)
+            layer.dE_db_tprev = np.copy(g_t_b)
 
 
 class Layer:
 
     def __init__(self, neurons, type=None, activation=None):
         self.dE_dW_tprev = 0  # matrice delle derivate dE/dW all'epoca precedente per la RProp
+        self.dE_db_tprev = 0  # matrice delle derivate dE/db all'epoca precedente per la RProp
         self.step_weights = None  # matrice di Delta maiuscolo associato ad ogni peso per la RProp
         self.step_bias = None  # matrice di Delta maiuscolo associato ad ogni bias per la RProp
 
@@ -131,12 +123,14 @@ class Layer:
         self.weights = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
         self.step_weights = np.asmatrix(np.ones(np.shape(self.weights)))
         self.dE_dW_tprev = np.zeros(np.shape(self.weights))  # Per la RProp
+        self.dE_db_tprev = np.zeros(np.shape(self.bias))  # Per la RProp
         self.bias = np.asmatrix(np.ones(self.neurons)).T
         self.step_bias = np.asmatrix(np.ones(np.shape(self.neurons))).T"""
 
         self.weights = np.asmatrix(np.random.normal(0, 0.5, (self.neurons, prev_layer_neurons)))
         self.step_weights = np.asmatrix(np.random.normal(0, 0.5, np.shape(self.weights)))
         self.dE_dW_tprev = np.zeros(np.shape(self.weights))  # Per la RProp
+        self.dE_db_tprev = np.zeros(np.shape(self.bias))  # Per la RProp
         self.bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T  # vettore colonna
         self.step_bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T
 
@@ -201,9 +195,8 @@ class Layer:
         print(self.dE_db_tot)
         print("")"""
 
-    def update_steps(self, epsilon, eta_plus, eta_minus, maxstep, minstep):
+    def update_steps_weights(self, epsilon, eta_plus, eta_minus, maxstep, minstep):
         # epsilon corrisponde a g(t) * g(t-1)
-
         self.step_weights[epsilon > 0] = np.minimum(self.step_weights.A[epsilon > 0] * eta_plus, maxstep)
         self.step_weights[epsilon < 0] = np.maximum(self.step_weights.A[epsilon < 0] * eta_minus, minstep)
 
@@ -219,6 +212,11 @@ class Layer:
                 self.step_weights[i, j] = np.maximum(eta_minus * self.step_weights[i, j], minstep)
                 # print("After", self.step_weights[i,j])
             # print("")"""
+
+    def update_steps_bias(self, epsilon, eta_plus, eta_minus, maxstep, minstep):
+        # epsilon corrisponde a g(t) * g(t-1)
+        self.step_bias[epsilon > 0] = np.minimum(self.step_bias.A[epsilon > 0] * eta_plus, maxstep)
+        self.step_bias[epsilon < 0] = np.maximum(self.step_bias.A[epsilon < 0] * eta_minus, minstep)
 
 
 if __name__ == '__main__':
