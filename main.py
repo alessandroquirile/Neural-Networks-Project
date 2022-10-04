@@ -1,5 +1,29 @@
+import numpy as np
+import torch
+from matplotlib import pyplot as plt
+from mnist import MNIST
+import pandas as pd
+from torchvision import datasets
+from torchvision.transforms import ToTensor
+from matplotlib import pyplot as plt
+
+
 from activation_functions import *
 from loss_functions import *
+
+def generate_data(n_items, n_features, c):
+    X = np.asmatrix(np.random.normal(size=(n_items, n_features)))
+    targets = np.asarray(np.random.randint(c, size=n_items))
+    targets = np.asmatrix(np.eye(np.max(targets) + 1)[targets])  # 1-hot encoding
+    return X, targets
+
+def plot(epochs, epoch_loss):
+    plt.plot(epochs, epoch_loss)
+    plt.legend(['Training Loss'])
+    plt.xlabel("epochs")
+    plt.ylabel("loss")
+    plt.grid(True)
+    plt.show()
 
 
 class NeuralNetwork:
@@ -10,15 +34,12 @@ class NeuralNetwork:
     def add_layer(self, layer):
         self.layers.append(layer)
 
-    def create(self):
+    def build(self):
         for i, layer in enumerate(self.layers):
             if i == 0:
                 layer.type = "input"
             else:
-                if i == len(self.layers) - 1:
-                    layer.type = "output"
-                else:
-                    layer.type = "hidden"
+                layer.type = "output" if i == len(self.layers) - 1 else "hidden"
                 layer.configure(self.layers[i - 1].neurons)
 
     def summary(self):
@@ -39,30 +60,38 @@ class NeuralNetwork:
 
     def train(self, X, targets):
         # batch mode
-        MAX_EPOCHS = 5
+        MAX_EPOCHS = 20
         loss_function = cross_entropy
-        E = 0  # errore sull'intero DS
-        # epoch_loss = []
+        epoch_loss = []
         for epoch in range(MAX_EPOCHS):
+            E = 0  # errore sull'intero DS
             for i, x in enumerate(X):
-                target = targets[i]
+                target = targets[i].T
                 prediction = self.forward_prop(x.T)
-                E_n = loss_function(prediction, target)
+                E_n = loss_function(prediction, target, post_process=True)
                 E += E_n
                 self.back_prop(target, local_loss=loss_function)
-            self.learning_rule(epoch, eta_minus=0.5, eta_plus=1.2, minstep=10 ** -6, maxstep=50)
+            self.learning_rule(l_rate=0.00001, momentum=0.01)
             print("E(%d) on TrS is:" % epoch, E)
-            # epoch_loss.append(E)
+            epoch_loss.append(E)
 
+        # plot(np.arange(MAX_EPOCHS), epoch_loss)
 
         """df = pd.DataFrame(epoch_loss)
         df_plot = df.plot(kind="line", grid=True).get_figure()
         df_plot.savefig("plot.pdf")"""
 
+    def predict(self, X):
+        predictions = []
+        for i, x in enumerate(X):
+            prediction = self.forward_prop(x.T)
+            predictions.append(prediction)
+        return np.asarray(predictions)
+
     def forward_prop(self, z):
         for layer in self.layers:
             z = layer.forward_prop_step(z)
-        return z  # output della rete
+        return z  # output della rete sull'input z
 
     def back_prop(self, target, local_loss):
         # Back-propagation
@@ -76,7 +105,8 @@ class NeuralNetwork:
             layer.back_prop_step(next_layer, prev_layer, target, local_loss)
             # print("")
 
-    def learning_rule(self, epoch, eta_minus, eta_plus, minstep, maxstep):
+    """def rprop(self, epoch, eta_minus, eta_plus, minstep, maxstep):
+        # RProp - alternativa al GD
         for layer in [layer for layer in self.layers if layer.type != "input"]:
             g_t_w = layer.dE_dW  # dE/dW per il layer corrente, all'epoca t (attuale)
             g_tprev_w = layer.dE_dW_tprev  # dE/dW per il layer corrente, all'epoca t-1
@@ -93,8 +123,13 @@ class NeuralNetwork:
 
             # l'aggiornamento richiede la copia in modo tale che le due variabili puntino a oggetti distinti
             layer.dE_dW_tprev = np.copy(g_t_w)
-            layer.dE_db_tprev = np.copy(g_t_b)
+            layer.dE_db_tprev = np.copy(g_t_b)"""
 
+    def learning_rule(self, l_rate, momentum):
+        # Momentum GD
+        for layer in [layer for layer in self.layers if layer.type != "input"]:
+            layer.update_weights(l_rate, momentum)
+            layer.update_bias(l_rate, momentum)
 
 class Layer:
 
@@ -119,13 +154,13 @@ class Layer:
         self.deltas = None  # vettore colonna di delta
 
     def configure(self, prev_layer_neurons):
-        """# Solo per dbg
-        self.weights = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
+        # Solo per dbg
+        """self.weights = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
         self.step_weights = np.asmatrix(np.ones(np.shape(self.weights)))
         self.dE_dW_tprev = np.zeros(np.shape(self.weights))  # Per la RProp
         self.dE_db_tprev = np.zeros(np.shape(self.bias))  # Per la RProp
         self.bias = np.asmatrix(np.ones(self.neurons)).T
-        self.step_bias = np.asmatrix(np.ones(np.shape(self.neurons))).T"""
+        self.step_bias = np.asmatrix(np.random.normal(1,1, self.neurons)).T"""
 
         self.weights = np.asmatrix(np.random.normal(0, 0.5, (self.neurons, prev_layer_neurons)))
         self.step_weights = np.asmatrix(np.random.normal(0, 0.5, np.shape(self.weights)))
@@ -154,7 +189,7 @@ class Layer:
         if self.type == "output":
             # BP1
             self.dact_a = self.activation(self.w_sum, derivative=True)  # la g'(a) nella formula, per ogni k nel layer
-            self.deltas = np.multiply(self.dact_a, local_loss(self.out, target, derivative=True))  # cx1
+            self.deltas = np.multiply(self.dact_a, local_loss(self.out, target, derivative=True, post_process=True))  # cx1
         else:
             # BP2
             self.dact_a = self.activation(self.w_sum, derivative=True)  # mx1
@@ -195,12 +230,13 @@ class Layer:
         print(self.dE_db_tot)
         print("")"""
 
-    def update_steps_weights(self, epsilon, eta_plus, eta_minus, maxstep, minstep):
+    """def update_steps_weights(self, epsilon, eta_plus, eta_minus, maxstep, minstep):
         # epsilon corrisponde a g(t) * g(t-1)
         self.step_weights[epsilon > 0] = np.minimum(self.step_weights.A[epsilon > 0] * eta_plus, maxstep)
         self.step_weights[epsilon < 0] = np.maximum(self.step_weights.A[epsilon < 0] * eta_minus, minstep)
 
-        """for (i, j), epsilon_ij in np.ndenumerate(epsilon):
+        # Oppure
+        for (i, j), epsilon_ij in np.ndenumerate(epsilon):
             if epsilon_ij > 0:
                 # print("Incremento")
                 # print("Before", self.step_weights[i,j])
@@ -213,14 +249,103 @@ class Layer:
                 # print("After", self.step_weights[i,j])
             # print("")"""
 
-    def update_steps_bias(self, epsilon, eta_plus, eta_minus, maxstep, minstep):
+    """def update_steps_bias(self, epsilon, eta_plus, eta_minus, maxstep, minstep):
         # epsilon corrisponde a g(t) * g(t-1)
         self.step_bias[epsilon > 0] = np.minimum(self.step_bias.A[epsilon > 0] * eta_plus, maxstep)
-        self.step_bias[epsilon < 0] = np.maximum(self.step_bias.A[epsilon < 0] * eta_minus, minstep)
+        self.step_bias[epsilon < 0] = np.maximum(self.step_bias.A[epsilon < 0] * eta_minus, minstep)"""
+
+    def update_weights(self, l_rate, momentum):
+        # Momentum GD
+        layer.weights = layer.weights - l_rate * layer.dE_dW
+        layer.weights = -l_rate * layer.dE_dW + momentum * layer.weights
+
+    def update_bias(self, l_rate, momentum):
+        # Momentum GD
+        layer.bias = layer.bias - l_rate * layer.dE_db
+        layer.bias = -l_rate * layer.dE_db + momentum * layer.bias
 
 
 if __name__ == '__main__':
+
+    # Prima di fare MNIST, faccio un caso più semplice
+    # Supponiamo una classificazione a 3 classi: cane, gatto, topo
+    # La classe cane è 0 -> 000
+    # La classe gatto è 1 -> 010
+    # La classe topo è 2 -> 001
     net = NeuralNetwork()
+    d = 4  # dimensione dell'input
+    c = 3  # classi in output
+
+    for m in (d, 4, 4, c):
+        layer = Layer(m)  # costruisco un layer con m neuroni
+        net.add_layer(layer)
+
+    net.build()
+
+    # Ok
+    """X = np.asmatrix([
+        [2, 5, 3.2, 7.2],
+        [1, 0.8, 1, 8.5],
+        [2, 7, 3, 1.4]
+    ])
+
+    targets = np.asarray([0,2,1])
+    targets = np.asmatrix(np.eye(np.max(targets) + 1)[targets])  # codifica one-hot dei target"""
+
+    X, targets = generate_data(n_items=10, n_features=d, c=c)
+
+    net.train(X, targets)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    """mndata = MNIST('data')
+    images, labels = mndata.load_training()  # 60.000 immagini
+
+    # index = 4
+    # print(mndata.display(images[index]), labels[index])
+
+    images = np.asmatrix(images)  # sono 60.000 immagini, ciascuna con 28*28 colonne
+    labels = np.asarray(labels)
+
+    net = NeuralNetwork()
+    d = 28*28  # dimensione dell'input
+    c = 10  # dimensione dell'output
+
+    for m in (d, 4, 4, c):
+        layer = Layer(m)  # costruisco un layer con m neuroni
+        net.add_layer(layer)
+
+    net.create()
+
+    net.train(images, labels)"""
+
+
+
+
+
+
+
+    """net = NeuralNetwork()
     d = 2  # dimensione dell'input
     c = 1  # dimensione dell'output
 
@@ -241,4 +366,4 @@ if __name__ == '__main__':
 
     targets = np.asarray([1, 0, 0, 0])
 
-    net.train(X, targets)  # gli passo X e i targets interi, del training set
+    net.train(X, targets)  # gli passo X e i targets interi, del training set"""
