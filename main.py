@@ -1,21 +1,15 @@
-import numpy as np
-import torch
 from matplotlib import pyplot as plt
-from mnist import MNIST
-import pandas as pd
-from torchvision import datasets
-from torchvision.transforms import ToTensor
-from matplotlib import pyplot as plt
-
 
 from activation_functions import *
 from loss_functions import *
+
 
 def generate_data(n_items, n_features, c):
     X = np.asmatrix(np.random.normal(size=(n_items, n_features)))
     targets = np.asarray(np.random.randint(c, size=n_items))
     targets = np.asmatrix(np.eye(np.max(targets) + 1)[targets])  # 1-hot encoding
     return X, targets
+
 
 def plot(epochs, epoch_loss):
     plt.plot(epochs, epoch_loss)
@@ -60,9 +54,10 @@ class NeuralNetwork:
 
     def train(self, X, targets):
         # batch mode
-        MAX_EPOCHS = 20
+        MAX_EPOCHS = 200
         loss_function = cross_entropy
         epoch_loss = []
+        epoch_loss_val = []
         for epoch in range(MAX_EPOCHS):
             E = 0  # errore sull'intero DS
             for i, x in enumerate(X):
@@ -72,21 +67,25 @@ class NeuralNetwork:
                 E += E_n
                 self.back_prop(target, local_loss=loss_function)
             self.learning_rule(l_rate=0.00001, momentum=0.01)
-            print("E(%d) on TrS is:" % epoch, E)
+            # print("E(%d) on TrS is:" % epoch, E)
             epoch_loss.append(E)
 
-        # plot(np.arange(MAX_EPOCHS), epoch_loss)
+            print("E(%d) on TrS is:" % epoch, E)
 
-        """df = pd.DataFrame(epoch_loss)
-        df_plot = df.plot(kind="line", grid=True).get_figure()
-        df_plot.savefig("plot.pdf")"""
+        plot(np.arange(MAX_EPOCHS), epoch_loss)
 
+    # Corrisponde a simnet
+    # Restituisce una matrice di predizioni dove la i-esima riga corrisponde alla i-esima predizione
+    # Cioè quella calcolata sull'item i-esimo
     def predict(self, X):
-        predictions = []
+        predictions = np.asmatrix(np.zeros(shape=(np.shape(X)[0], c)))
         for i, x in enumerate(X):
             prediction = self.forward_prop(x.T)
-            predictions.append(prediction)
-        return np.asarray(predictions)
+            """print("Prediction on %d item" % i)  # dbg
+            print(prediction)  # dbg
+            print("")  # dbg"""
+            predictions[i, :] = prediction.T
+        return predictions
 
     def forward_prop(self, z):
         for layer in self.layers:
@@ -130,6 +129,7 @@ class NeuralNetwork:
         for layer in [layer for layer in self.layers if layer.type != "input"]:
             layer.update_weights(l_rate, momentum)
             layer.update_bias(l_rate, momentum)
+
 
 class Layer:
 
@@ -189,7 +189,8 @@ class Layer:
         if self.type == "output":
             # BP1
             self.dact_a = self.activation(self.w_sum, derivative=True)  # la g'(a) nella formula, per ogni k nel layer
-            self.deltas = np.multiply(self.dact_a, local_loss(self.out, target, derivative=True, post_process=True))  # cx1
+            self.deltas = np.multiply(self.dact_a,
+                                      local_loss(self.out, target, derivative=True, post_process=True))  # cx1
         else:
             # BP2
             self.dact_a = self.activation(self.w_sum, derivative=True)  # mx1
@@ -273,7 +274,7 @@ if __name__ == '__main__':
     # La classe gatto è 1 -> 010
     # La classe topo è 2 -> 001
     net = NeuralNetwork()
-    d = 4  # dimensione dell'input
+    d = 4  # dimensione dell'input (n_features)
     c = 3  # classi in output
 
     for m in (d, 4, 4, c):
@@ -282,88 +283,6 @@ if __name__ == '__main__':
 
     net.build()
 
-    # Ok
-    """X = np.asmatrix([
-        [2, 5, 3.2, 7.2],
-        [1, 0.8, 1, 8.5],
-        [2, 7, 3, 1.4]
-    ])
-
-    targets = np.asarray([0,2,1])
-    targets = np.asmatrix(np.eye(np.max(targets) + 1)[targets])  # codifica one-hot dei target"""
-
     X, targets = generate_data(n_items=10, n_features=d, c=c)
 
     net.train(X, targets)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    """mndata = MNIST('data')
-    images, labels = mndata.load_training()  # 60.000 immagini
-
-    # index = 4
-    # print(mndata.display(images[index]), labels[index])
-
-    images = np.asmatrix(images)  # sono 60.000 immagini, ciascuna con 28*28 colonne
-    labels = np.asarray(labels)
-
-    net = NeuralNetwork()
-    d = 28*28  # dimensione dell'input
-    c = 10  # dimensione dell'output
-
-    for m in (d, 4, 4, c):
-        layer = Layer(m)  # costruisco un layer con m neuroni
-        net.add_layer(layer)
-
-    net.create()
-
-    net.train(images, labels)"""
-
-
-
-
-
-
-
-    """net = NeuralNetwork()
-    d = 2  # dimensione dell'input
-    c = 1  # dimensione dell'output
-
-    for m in (d, 4, 4, c):
-        layer = Layer(m)  # costruisco un layer con m neuroni
-        net.add_layer(layer)
-
-    net.create()
-
-    # net.summary()  # dbg
-
-    X = np.asmatrix([
-        [1, 0],
-        [1, 1],
-        [0, 1],
-        [0, 0]
-    ])
-
-    targets = np.asarray([1, 0, 0, 0])
-
-    net.train(X, targets)  # gli passo X e i targets interi, del training set"""
