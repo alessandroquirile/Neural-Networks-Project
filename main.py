@@ -54,19 +54,17 @@ class NeuralNetwork:
 
     def train(self, X, targets):
         # batch mode
-        MAX_EPOCHS = 200
-        loss_function = cross_entropy
+        MAX_EPOCHS = 10
         epoch_loss = []
         for epoch in range(MAX_EPOCHS):
             E = 0  # errore sull'intero DS
             for i, x in enumerate(X):
                 target = targets[i].T
                 prediction = self.forward_prop(x.T)
-                E_n = loss_function(prediction, target, post_process=True)
+                E_n = cross_entropy(prediction, target, post_process=True)
                 E += E_n
-                self.back_prop(target, local_loss=loss_function)
-            self.learning_rule(l_rate=0.01, momentum=0.01)  # 0.00001
-            # print("E(%d) on TrS is:" % epoch, E)
+                self.back_prop(target, local_loss=cross_entropy)
+            self.learning_rule(l_rate=0.01, momentum=0.01)  # 0.00001 - todo: tuning
             epoch_loss.append(E)
 
             print("E(%d) on TrS is:" % epoch, E)
