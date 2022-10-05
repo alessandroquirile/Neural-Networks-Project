@@ -1,5 +1,10 @@
-"""mndata = MNIST('data')
-    images, labels = mndata.load_training()  # 60.000 immagini
+"""import numpy as np
+from mnist import MNIST
+
+from main import NeuralNetwork
+
+mndata = MNIST('data')
+images, labels = mndata.load_training()  # 60.000 immagini
 
     # index = 4
     # print(mndata.display(images[index]), labels[index])

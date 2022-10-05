@@ -57,7 +57,6 @@ class NeuralNetwork:
         MAX_EPOCHS = 200
         loss_function = cross_entropy
         epoch_loss = []
-        epoch_loss_val = []
         for epoch in range(MAX_EPOCHS):
             E = 0  # errore sull'intero DS
             for i, x in enumerate(X):
@@ -66,7 +65,7 @@ class NeuralNetwork:
                 E_n = loss_function(prediction, target, post_process=True)
                 E += E_n
                 self.back_prop(target, local_loss=loss_function)
-            self.learning_rule(l_rate=0.00001, momentum=0.01)
+            self.learning_rule(l_rate=0.01, momentum=0.01)  # 0.00001
             # print("E(%d) on TrS is:" % epoch, E)
             epoch_loss.append(E)
 
@@ -134,10 +133,10 @@ class NeuralNetwork:
 class Layer:
 
     def __init__(self, neurons, type=None, activation=None):
-        self.dE_dW_tprev = 0  # matrice delle derivate dE/dW all'epoca precedente per la RProp
+        """self.dE_dW_tprev = 0  # matrice delle derivate dE/dW all'epoca precedente per la RProp
         self.dE_db_tprev = 0  # matrice delle derivate dE/db all'epoca precedente per la RProp
         self.step_weights = None  # matrice di Delta maiuscolo associato ad ogni peso per la RProp
-        self.step_bias = None  # matrice di Delta maiuscolo associato ad ogni bias per la RProp
+        self.step_bias = None  # matrice di Delta maiuscolo associato ad ogni bias per la RProp"""
 
         self.dE_dW = 0  # matrice di derivate dE/dW dove W è la matrice del layer sull'intero DS
         self.dE_db = 0  # matrice di derivate dE/db dove b è il vettore colonna bias sull'intero DS
@@ -163,11 +162,11 @@ class Layer:
         self.step_bias = np.asmatrix(np.random.normal(1,1, self.neurons)).T"""
 
         self.weights = np.asmatrix(np.random.normal(0, 0.5, (self.neurons, prev_layer_neurons)))
-        self.step_weights = np.asmatrix(np.random.normal(0, 0.5, np.shape(self.weights)))
+        """self.step_weights = np.asmatrix(np.random.normal(0, 0.5, np.shape(self.weights)))  # Per la RProp
         self.dE_dW_tprev = np.zeros(np.shape(self.weights))  # Per la RProp
-        self.dE_db_tprev = np.zeros(np.shape(self.bias))  # Per la RProp
+        self.dE_db_tprev = np.zeros(np.shape(self.bias))  # Per la RProp"""
         self.bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T  # vettore colonna
-        self.step_bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T
+        """self.step_bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T"""  # Per la RProp
 
         if self.activation is None:
             # th approx universale
