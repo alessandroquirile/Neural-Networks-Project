@@ -1,12 +1,9 @@
-import math
-
-import numpy as np
 from matplotlib import pyplot as plt
+from mnist.loader import MNIST
 
 from activation_functions import *
 from loss_functions import *
 
-from mnist import MNIST
 
 def generate_data(n_items, n_features, n_classes):
     X = np.asmatrix(np.random.normal(size=(n_items, n_features)))
@@ -58,14 +55,14 @@ class NeuralNetwork:
             print("")
 
     def fit(self, X, targets):
-        MAX_EPOCHS = 200
+        MAX_EPOCHS = 100
         epoch_loss = []
 
         # batch mode
         for epoch in range(MAX_EPOCHS):
             predictions = self.predict(X)
             self.back_prop(targets, cross_entropy)
-            self.learning_rule(l_rate=0.001, momentum=0.001)  # 0.00001 - tuning here
+            self.learning_rule(l_rate=0.00001, momentum=0.9)  # 0.00001 - tuning here
             loss = cross_entropy(predictions, targets)
             epoch_loss.append(loss)
             print("E(%d) on TrS is:" % epoch, loss)
@@ -150,8 +147,8 @@ class Layer:
         """self.weights = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
         self.bias = np.asmatrix(np.ones(self.neurons)).T"""
 
-        self.weights = np.asmatrix(np.random.normal(-1, 1, (self.neurons, prev_layer_neurons)))
-        self.bias = np.asmatrix(np.random.normal(-1, 1, self.neurons)).T  # vettore colonna
+        self.weights = np.asmatrix(np.random.normal(-0.1, 0.02, (self.neurons, prev_layer_neurons)))
+        self.bias = np.asmatrix(np.random.normal(-0.1, 0.02, self.neurons)).T  # vettore colonna
 
         if self.activation is None:
             # th approx universale
@@ -230,42 +227,20 @@ if __name__ == '__main__':
     mndata = MNIST(path="data", return_type="numpy", mode="randomly_binarized")
     images, labels = mndata.load_training()  # 60.000 immagini da 28*28 colonne
 
+    # images = images.astype('float32')/255  # ??
     labels = one_hot(labels)
 
     net = NeuralNetwork()
     d = np.shape(images)[1]  # dimensione dell'input = 28 * 28
     c = np.shape(labels)[0]  # dimensione dell'output = 10
 
-    for m in (d, 4, c):
+    for m in (d, 1, c):
         layer = Layer(m)  # costruisco un layer con m neuroni
         net.add_layer(layer)
 
     net.build()
 
     net.fit(images, labels)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     """# Prima di fare MNIST, faccio un caso più semplice
     # Supponiamo una classificazione a 3 classi: cane, gatto, topo
@@ -275,7 +250,7 @@ if __name__ == '__main__':
     net = NeuralNetwork()
     d = 4  # dimensione dell'input (n_features)
     c = 3  # classi in output
-    n_items = 10000
+    n_items = 60000  #  Quando i dati sono tanti, mi dà NaN
 
     for m in (d, 4, c):
         layer = Layer(m)  # costruisco un layer con m neuroni
