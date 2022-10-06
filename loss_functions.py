@@ -8,7 +8,7 @@ def sum_of_squares(y, t, derivative=False):
     return 0.5 * np.sum(np.sum(np.square((y - t))))
 
 
-def cross_entropy(y, t, derivative=False, post_process=False):
+def cross_entropy(y, t, derivative=False, post_process=True):
     if post_process:
         if derivative:
             return y - t

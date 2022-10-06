@@ -62,7 +62,7 @@ class NeuralNetwork:
             predictions = self.predict(X)
             self.back_prop(targets, cross_entropy)
             self.learning_rule(l_rate=0.01, momentum=0.01)  # 0.00001 - tuning here
-            loss = cross_entropy(predictions, targets, post_process=True)
+            loss = cross_entropy(predictions, targets)
             epoch_loss.append(loss)
             print("E(%d) on TrS is:" % epoch, loss)
 
@@ -73,7 +73,7 @@ class NeuralNetwork:
             for i, x in enumerate(X):
                 target = targets[i].T
                 prediction = self.forward_prop(x.T)
-                E_n = cross_entropy(prediction, target, post_process=True)
+                E_n = cross_entropy(prediction, target)
                 E += E_n
                 self.back_prop(target, local_loss=cross_entropy)
             self.learning_rule(l_rate=0.01, momentum=0.01)  # 0.00001 - tuning here
@@ -170,8 +170,7 @@ class Layer:
             # BP1
             self.dact_a = self.activation(self.w_sum, derivative=True)  # la g'(a) nella formula, per ogni k nel layer
             self.deltas = np.multiply(self.dact_a,
-                                      local_loss(self.out, target, derivative=True,
-                                                 post_process=True))  # (c,batch_size)
+                                      local_loss(self.out, target, derivative=True))  # (c,batch_size)
         else:
             # BP2
             self.dact_a = self.activation(self.w_sum, derivative=True)  # (m,batch_size)
