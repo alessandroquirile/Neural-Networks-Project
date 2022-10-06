@@ -1,8 +1,10 @@
+import numpy as np
 from matplotlib import pyplot as plt
 
 from activation_functions import *
 from loss_functions import *
 
+from mnist import MNIST
 
 def generate_data(n_items, n_features, n_classes):
     X = np.asmatrix(np.random.normal(size=(n_items, n_features)))
@@ -211,13 +213,13 @@ class Layer:
 
     def update_weights(self, l_rate, momentum):
         # Momentum GD
-        layer.weights = layer.weights - l_rate * layer.dE_dW
-        layer.weights = -l_rate * layer.dE_dW + momentum * layer.weights
+        self.weights = self.weights - l_rate * self.dE_dW
+        self.weights = -l_rate * self.dE_dW + momentum * self.weights
 
     def update_bias(self, l_rate, momentum):
         # Momentum GD
-        layer.bias = layer.bias - l_rate * layer.dE_db
-        layer.bias = -l_rate * layer.dE_db + momentum * layer.bias
+        self.bias = self.bias - l_rate * self.dE_db
+        self.bias = -l_rate * self.dE_db + momentum * self.bias
 
 
 if __name__ == '__main__':
@@ -230,9 +232,9 @@ if __name__ == '__main__':
     net = NeuralNetwork()
     d = 4  # dimensione dell'input (n_features)
     c = 3  # classi in output
-    n_items = 10
+    n_items = 10000
 
-    for m in (d, 4, 4, c):
+    for m in (d, 4, c):
         layer = Layer(m)  # costruisco un layer con m neuroni
         net.add_layer(layer)
 
