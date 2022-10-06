@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -63,7 +65,7 @@ class NeuralNetwork:
         for epoch in range(MAX_EPOCHS):
             predictions = self.predict(X)
             self.back_prop(targets, cross_entropy)
-            self.learning_rule(l_rate=0.01, momentum=0.01)  # 0.00001 - tuning here
+            self.learning_rule(l_rate=0.001, momentum=0.001)  # 0.00001 - tuning here
             loss = cross_entropy(predictions, targets)
             epoch_loss.append(loss)
             print("E(%d) on TrS is:" % epoch, loss)
@@ -148,8 +150,8 @@ class Layer:
         """self.weights = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
         self.bias = np.asmatrix(np.ones(self.neurons)).T"""
 
-        self.weights = np.asmatrix(np.random.normal(0, 0.5, (self.neurons, prev_layer_neurons)))
-        self.bias = np.asmatrix(np.random.normal(0, 0.5, self.neurons)).T  # vettore colonna
+        self.weights = np.asmatrix(np.random.normal(-1, 1, (self.neurons, prev_layer_neurons)))
+        self.bias = np.asmatrix(np.random.normal(-1, 1, self.neurons)).T  # vettore colonna
 
         if self.activation is None:
             # th approx universale
@@ -176,7 +178,8 @@ class Layer:
         else:
             # BP2
             self.dact_a = self.activation(self.w_sum, derivative=True)  # (m,batch_size)
-            self.deltas = np.multiply(self.dact_a, np.dot(next_layer.weights.T, next_layer.deltas))
+            temp = np.dot(next_layer.weights.T, next_layer.deltas)  # dbg - arriva ad infinito e sballa i calcoli
+            self.deltas = np.multiply(self.dact_a, temp)
 
         # Una volta calcolati i delta dei nodi di output e quelli interni, occorre calcolare
         # La derivata della funzione E rispetto al generico peso wij [formula 1.5] sull'istanza n-esima
@@ -224,7 +227,47 @@ class Layer:
 
 if __name__ == '__main__':
 
-    # Prima di fare MNIST, faccio un caso più semplice
+    mndata = MNIST(path="data", return_type="numpy", mode="randomly_binarized")
+    images, labels = mndata.load_training()  # 60.000 immagini da 28*28 colonne
+
+    labels = one_hot(labels)
+
+    net = NeuralNetwork()
+    d = np.shape(images)[1]  # dimensione dell'input = 28 * 28
+    c = np.shape(labels)[0]  # dimensione dell'output = 10
+
+    for m in (d, 4, c):
+        layer = Layer(m)  # costruisco un layer con m neuroni
+        net.add_layer(layer)
+
+    net.build()
+
+    net.fit(images, labels)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    """# Prima di fare MNIST, faccio un caso più semplice
     # Supponiamo una classificazione a 3 classi: cane, gatto, topo
     # La classe cane è 0 -> 000
     # La classe gatto è 1 -> 010
@@ -242,4 +285,4 @@ if __name__ == '__main__':
 
     X, targets = generate_data(n_items=n_items, n_features=d, n_classes=c)
 
-    net.fit(X, targets)
+    net.fit(X, targets)"""
