@@ -16,7 +16,6 @@ def generate_data(n_items, n_features, n_classes):
 def one_hot(targets):
     return np.asmatrix(np.eye(np.max(targets) + 1)[targets]).T  # vettore colonna
 
-
 def plot(epochs, epoch_loss):
     plt.plot(epochs, epoch_loss)
     plt.legend(['Training Loss'])
@@ -64,6 +63,12 @@ class NeuralNetwork:
     def fit(self, X_train, targets_train, X_val, targets_val):
         MAX_EPOCHS = 100
         e_loss_train = []
+        e_loss_val = []
+
+        # Effettuo una predizione per calcolare l'errore minimo che andrà poi eventualmente aggiornato ad ogni epoca
+        predictions_val = self.predict(X_val)
+        min_loss_val = cross_entropy(predictions_val, targets_val)
+        best_net = self
 
         # batch mode
         for epoch in range(MAX_EPOCHS):
@@ -72,9 +77,15 @@ class NeuralNetwork:
             self.learning_rule(l_rate=0.00001, momentum=0.9)  # 0.00001 - tuning here
             loss_train = cross_entropy(predictions_train, targets_train)
             e_loss_train.append(loss_train)
-            print("E(%d) on TrS is:" % epoch, loss_train)
 
-        plot(np.arange(MAX_EPOCHS), e_loss_train)
+            # Validation
+            predictions_val = self.predict(X_val)
+            loss_val = cross_entropy(predictions_val, targets_val)
+            e_loss_val.append(loss_val)
+
+            print("E(%d) on TrS is:" % epoch, loss_train, " on VS is:", loss_val)
+
+        # plot(np.arange(MAX_EPOCHS), e_loss_train)
 
     # Predice i target di ciascun elemento del Dataset (anche se singleton)
     # Costruisce una matrice di predizioni dove la i-esima colonna corrisponde
@@ -177,7 +188,7 @@ class Layer:
 
         # Per ogni layer: dE/db = dE/da * da/db = dE/da * 1 = dE/da = delta
         # Quindi la derivata di E risp. al vettore colonna bias è self.deltas
-        self.dEn_db = self.deltas
+        self.dEn_db = np.sum(self.deltas, axis=1)
 
         # La derivata dE/dW sull'intero DS è la somma per n=1 a N di dE/dW sul singolo item
         # self.dE_dW += self.dEn_dW  # todo - probabilmente da togliere
