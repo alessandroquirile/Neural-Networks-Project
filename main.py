@@ -214,15 +214,16 @@ class Layer:
 
 
 if __name__ == '__main__':
-
     mndata = MNIST(path="data", return_type="numpy", mode="randomly_binarized")
-    images, labels = mndata.load_training()  # 60.000 immagini da 28*28 colonne (features)
+    X_train, targets_train = mndata.load_training()  # 60.000 immagini da 28*28 colonne (features)
+    X_val, targets_val = mndata.load_testing()  # 10.000 immagini da 28*28 colonne (features)
 
-    labels = one_hot(labels)
+    targets_train = one_hot(targets_train)
+    targets_val = one_hot(targets_val)
 
     net = NeuralNetwork()
-    d = np.shape(images)[1]  # dimensione dell'input = 28 * 28
-    c = np.shape(labels)[0]  # dimensione dell'output = 10
+    d = np.shape(X_train)[1]  # dimensione dell'input = 28 * 28
+    c = np.shape(targets_train)[0]  # dimensione dell'output = 10
 
     for m in (d, 1, c):
         layer = Layer(m)  # costruisco un layer con m neuroni
@@ -230,4 +231,4 @@ if __name__ == '__main__':
 
     net.build()
 
-    net.fit(images, labels)
+    net.fit(X_train, targets_train)
