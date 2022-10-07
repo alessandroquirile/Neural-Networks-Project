@@ -16,11 +16,12 @@ def generate_data(n_items, n_features, n_classes):
 def one_hot(targets):
     return np.asmatrix(np.eye(np.max(targets) + 1)[targets]).T  # vettore colonna
 
-def plot(epochs, epoch_loss):
-    plt.plot(epochs, epoch_loss)
-    plt.legend(['Training Loss'])
-    plt.xlabel("epochs")
-    plt.ylabel("loss")
+def plot(epochs, loss_train, loss_val):
+    plt.plot(epochs, loss_train)
+    plt.plot(epochs, loss_val, color="orange")
+    plt.legend(["Training Loss", "Validation Loss"])
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
     plt.grid(True)
     plt.show()
 
@@ -61,20 +62,22 @@ class NeuralNetwork:
             print("")
 
     def fit(self, X_train, targets_train, X_val, targets_val):
-        MAX_EPOCHS = 100
+        MAX_EPOCHS = 50
         e_loss_train = []
         e_loss_val = []
 
         # Effettuo una predizione per calcolare l'errore minimo che andrà poi eventualmente aggiornato ad ogni epoca
         predictions_val = self.predict(X_val)
         min_loss_val = cross_entropy(predictions_val, targets_val)
-        best_net = self
+
+        best_net = self  # rete (intesa come parametri) che minimizza l'errore sul VS
+        best_epoch = None  # epoca in cui l'errore sul VS è minimo
 
         # batch mode
         for epoch in range(MAX_EPOCHS):
             predictions_train = self.predict(X_train)
             self.back_prop(targets_train, cross_entropy)
-            self.learning_rule(l_rate=0.00001, momentum=0.9)  # 0.00001 - tuning here
+            self.learning_rule(l_rate=0.000001, momentum=0.9)  # tuning here
             loss_train = cross_entropy(predictions_train, targets_train)
             e_loss_train.append(loss_train)
 
@@ -85,7 +88,15 @@ class NeuralNetwork:
 
             print("E(%d) on TrS is:" % epoch, loss_train, " on VS is:", loss_val)
 
-        # plot(np.arange(MAX_EPOCHS), e_loss_train)
+            if loss_val < min_loss_val:
+                min_loss_val = loss_val
+                best_epoch = epoch
+                best_net = self
+
+        print("Validation loss is minimum at epoch:", best_epoch)
+        print(best_net)
+
+        plot(np.arange(MAX_EPOCHS), e_loss_train, e_loss_val)
 
     # Predice i target di ciascun elemento del Dataset (anche se singleton)
     # Costruisce una matrice di predizioni dove la i-esima colonna corrisponde
