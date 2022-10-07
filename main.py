@@ -69,19 +69,6 @@ class NeuralNetwork:
 
         plot(np.arange(MAX_EPOCHS), epoch_loss)
 
-        """for epoch in range(MAX_EPOCHS):
-            E = 0  # errore sull'intero DS
-            for i, x in enumerate(X):
-                target = targets[i].T
-                prediction = self.forward_prop(x.T)
-                E_n = cross_entropy(prediction, target)
-                E += E_n
-                self.back_prop(target, local_loss=cross_entropy)
-            self.learning_rule(l_rate=0.01, momentum=0.01)  # 0.00001 - tuning here
-            epoch_loss.append(E)
-
-        plot(np.arange(MAX_EPOCHS), epoch_loss)"""
-
     # Predice i target di ciascun elemento del Dataset (anche se singleton)
     # Costruisce una matrice di predizioni dove la i-esima colonna corrisponde
     # alla predizione dell'i-esimo item del DS
@@ -90,20 +77,6 @@ class NeuralNetwork:
         for layer in self.layers:
             z = layer.forward_prop_step(z)
         return z
-        # predictions = np.asmatrix(np.zeros(shape=(c, np.shape(dataset)[0])))
-        # for i, x in enumerate(dataset):
-        #     prediction = self.forward_prop(x.T)
-        #     print("Prediction on %d item" % i)  # dbg
-        #     print(prediction)  # dbg
-        #     print("")
-        #     predictions[:, i] = prediction
-        # return predictions
-
-    """# Richiede un vettore colonna
-    def forward_prop(self, z):
-        for layer in self.layers:
-            z = layer.forward_prop_step(z)
-        return z  # output della rete sull'input z"""
 
     def back_prop(self, target, loss):
         # Back-propagation
@@ -122,6 +95,13 @@ class NeuralNetwork:
         for layer in [layer for layer in self.layers if layer.type != "input"]:
             layer.update_weights(l_rate, momentum)
             layer.update_bias(l_rate, momentum)
+
+
+def calculate_gain(activation):
+    if activation == sigmoid or activation == identity:
+        return 1
+    elif activation == relu:
+        return np.sqrt(2)
 
 
 class Layer:
@@ -143,19 +123,32 @@ class Layer:
         self.deltas = None  # vettore colonna di delta
 
     def configure(self, prev_layer_neurons):
-        # Solo per dbg
-        """self.weights = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
-        self.bias = np.asmatrix(np.ones(self.neurons)).T"""
+        self.set_activation()
 
+        # Gaussian
         self.weights = np.asmatrix(np.random.normal(-0.1, 0.02, (self.neurons, prev_layer_neurons)))
         self.bias = np.asmatrix(np.random.normal(-0.1, 0.02, self.neurons)).T  # vettore colonna
 
+        # self.xavier_init(prev_layer_neurons)
+
+    def set_activation(self):
         if self.activation is None:
             # th approx universale
             if self.type == "hidden":
                 self.activation = sigmoid
             elif self.type == "output":
                 self.activation = identity
+
+    def xavier_init(self, prev_layer_neurons, distribution="normal"):
+        gain = calculate_gain(self.activation)
+        if distribution == "normal":
+            std = gain * np.sqrt(2 / (self.neurons + prev_layer_neurons))
+            self.weights = np.asmatrix(np.random.normal(0, std, (self.neurons, prev_layer_neurons)))
+            self.bias = np.asmatrix(np.random.normal(0, std, self.neurons)).T  # vettore colonna
+        elif distribution == "uniform":
+            a = gain * np.sqrt(6 / (self.neurons + prev_layer_neurons))
+            self.weights = np.asmatrix(np.random.uniform(a, -a, (self.neurons, prev_layer_neurons)))
+            self.bias = np.asmatrix(np.random.uniform(a, -a, self.neurons)).T  # vettore colonna
 
     def forward_prop_step(self, z):
         # Se il layer è di input, si fa un un mirroring del vettore in ingresso
@@ -175,8 +168,7 @@ class Layer:
         else:
             # BP2
             self.dact_a = self.activation(self.w_sum, derivative=True)  # (m,batch_size)
-            temp = np.dot(next_layer.weights.T, next_layer.deltas)  # dbg - arriva ad infinito e sballa i calcoli
-            self.deltas = np.multiply(self.dact_a, temp)
+            self.deltas = np.multiply(self.dact_a, np.dot(next_layer.weights.T, next_layer.deltas))
 
         # Una volta calcolati i delta dei nodi di output e quelli interni, occorre calcolare
         # La derivata della funzione E rispetto al generico peso wij [formula 1.5] sull'istanza n-esima
@@ -227,7 +219,7 @@ if __name__ == '__main__':
     mndata = MNIST(path="data", return_type="numpy", mode="randomly_binarized")
     images, labels = mndata.load_training()  # 60.000 immagini da 28*28 colonne
 
-    # images = images.astype('float32')/255  # ??
+    # images = images.astype('float32')/255  # not needed
     labels = one_hot(labels)
 
     net = NeuralNetwork()
