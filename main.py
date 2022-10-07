@@ -25,6 +25,13 @@ def plot(epochs, epoch_loss):
     plt.grid(True)
     plt.show()
 
+def calculate_gain(activation):
+    if activation == sigmoid or activation == identity:
+        return 1
+    elif activation == relu:
+        return np.sqrt(2)
+    elif activation == tanh:
+        return 5 / 3
 
 class NeuralNetwork:
 
@@ -95,14 +102,6 @@ class NeuralNetwork:
         for layer in [layer for layer in self.layers if layer.type != "input"]:
             layer.update_weights(l_rate, momentum)
             layer.update_bias(l_rate, momentum)
-
-
-def calculate_gain(activation):
-    if activation == sigmoid or activation == identity:
-        return 1
-    elif activation == relu:
-        return np.sqrt(2)
-
 
 class Layer:
 
