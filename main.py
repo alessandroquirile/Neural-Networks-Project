@@ -216,9 +216,8 @@ class Layer:
 if __name__ == '__main__':
 
     mndata = MNIST(path="data", return_type="numpy", mode="randomly_binarized")
-    images, labels = mndata.load_training()  # 60.000 immagini da 28*28 colonne
+    images, labels = mndata.load_training()  # 60.000 immagini da 28*28 colonne (features)
 
-    # images = images.astype('float32')/255  # not needed
     labels = one_hot(labels)
 
     net = NeuralNetwork()
@@ -232,23 +231,3 @@ if __name__ == '__main__':
     net.build()
 
     net.fit(images, labels)
-
-    """# Prima di fare MNIST, faccio un caso più semplice
-    # Supponiamo una classificazione a 3 classi: cane, gatto, topo
-    # La classe cane è 0 -> 000
-    # La classe gatto è 1 -> 010
-    # La classe topo è 2 -> 001
-    net = NeuralNetwork()
-    d = 4  # dimensione dell'input (n_features)
-    c = 3  # classi in output
-    n_items = 60000  #  Quando i dati sono tanti, mi dà NaN
-
-    for m in (d, 4, c):
-        layer = Layer(m)  # costruisco un layer con m neuroni
-        net.add_layer(layer)
-
-    net.build()
-
-    X, targets = generate_data(n_items=n_items, n_features=d, n_classes=c)
-
-    net.fit(X, targets)"""
