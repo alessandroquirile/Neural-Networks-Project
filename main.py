@@ -61,20 +61,20 @@ class NeuralNetwork:
             print(layer.bias)
             print("")
 
-    def fit(self, X, targets):
+    def fit(self, X_train, targets_train, X_val, targets_val):
         MAX_EPOCHS = 100
-        epoch_loss = []
+        e_loss_train = []
 
         # batch mode
         for epoch in range(MAX_EPOCHS):
-            predictions = self.predict(X)
-            self.back_prop(targets, cross_entropy)
+            predictions_train = self.predict(X_train)
+            self.back_prop(targets_train, cross_entropy)
             self.learning_rule(l_rate=0.00001, momentum=0.9)  # 0.00001 - tuning here
-            loss = cross_entropy(predictions, targets)
-            epoch_loss.append(loss)
-            print("E(%d) on TrS is:" % epoch, loss)
+            loss_train = cross_entropy(predictions_train, targets_train)
+            e_loss_train.append(loss_train)
+            print("E(%d) on TrS is:" % epoch, loss_train)
 
-        plot(np.arange(MAX_EPOCHS), epoch_loss)
+        plot(np.arange(MAX_EPOCHS), e_loss_train)
 
     # Predice i target di ciascun elemento del Dataset (anche se singleton)
     # Costruisce una matrice di predizioni dove la i-esima colonna corrisponde
@@ -231,4 +231,4 @@ if __name__ == '__main__':
 
     net.build()
 
-    net.fit(X_train, targets_train)
+    net.fit(X_train, targets_train, X_val, targets_val)
