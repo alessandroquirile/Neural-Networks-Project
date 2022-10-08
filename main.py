@@ -130,10 +130,10 @@ class Layer:
 
     def __init__(self, neurons, type=None, activation=None):
         # n è l'n-esimo item se online; altrimenti l'intero DS
-        self.dE_dW = 0  # matrice di derivate dE/dW dove W è la matrice del layer sull'intero DS
-        self.dE_db = 0  # matrice di derivate dE/db dove b è il vettore colonna bias sull'intero DS
-        self.dEn_db = None  # matrice di derivate dE^(n)/db dove b è il vettore colonna bias sull'item n-esimo
-        self.dEn_dW = None  # matrice di derivate dE^(n)/dW dove W è la matrice del layer sull'item n-esimo
+        self.dE_dW = None  # matrice di derivate dE/dW dove W è la matrice del layer sull'intero DS
+        self.dE_db = None  # matrice di derivate dE/db dove b è il vettore colonna bias sull'intero DS
+        # self.dEn_db = None  # matrice di derivate dE^(n)/db dove b è il vettore colonna bias sull'item n-esimo
+        # self.dEn_dW = None  # matrice di derivate dE^(n)/dW dove W è la matrice del layer sull'item n-esimo
         self.dact_a = None  # derivata della funzione di attivazione nel punto a
         self.out = None  # matrice di output per il layer
         self.weights = None  # matrice di pesi in ingresso
@@ -196,19 +196,21 @@ class Layer:
         # La derivata della funzione E rispetto al generico peso wij [formula 1.5] sull'istanza n-esima
         # Quindi costruisco una matrice di derivate una per ogni matrice di pesi (quindi una per ogni livello)
         # Sarà sufficiente moltiplicare (righe per colonne) self.deltas con gli output z del layer a sinistra
-        self.dEn_dW = self.deltas * prev_layer.out.T
+        # self.dEn_dW = self.deltas * prev_layer.out.T
+        self.dE_dW = self.deltas * prev_layer.out.T
 
         # Per ogni layer: dE/db = dE/da * da/db = dE/da * 1 = dE/da = delta
         # Quindi la derivata di E risp. al vettore colonna bias è self.deltas
-        self.dEn_db = np.sum(self.deltas, axis=1)
+        # self.dEn_db = np.sum(self.deltas, axis=1)
+        self.dE_db = np.sum(self.deltas, axis=1)
 
         # La derivata dE/dW sull'intero DS è la somma per n=1 a N di dE/dW sul singolo item
         # self.dE_dW += self.dEn_dW  # probabilmente da togliere
-        self.dE_dW = self.dEn_dW  # forse lasciare questo
+        # self.dE_dW = self.dEn_dW  # forse lasciare questo
 
         # La derivata dE/db sull'intero DS è la somma per n=1 a N di dE/db sul singolo item
         # self.dE_db += self.dEn_db  # probabilmente da togliere
-        self.dE_db = self.dEn_db  # forse lasciare questo
+        # self.dE_db = self.dEn_db  # forse lasciare questo
 
         """print(self.dE_dW) # dbg
         print("")"""
