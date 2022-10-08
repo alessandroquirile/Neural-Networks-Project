@@ -1,3 +1,4 @@
+import numpy as np
 from matplotlib import pyplot as plt
 from mnist.loader import MNIST
 
@@ -10,7 +11,6 @@ def generate_data(n_items, n_features, n_classes):
     targets = np.asarray(np.random.randint(n_classes, size=n_items))
     targets = one_hot(targets)
     return X, targets
-
 
 # La 1-hot encoding per un'etichetta y restituisce un vettore colonna 1-hot
 def one_hot(targets):
@@ -71,7 +71,7 @@ class NeuralNetwork:
         min_loss_val = cross_entropy(predictions_val, targets_val)
 
         best_net = self  # rete (intesa come parametri) che minimizza l'errore sul VS
-        best_epoch = None  # epoca in cui l'errore sul VS è minimo
+        best_epoch = 0  # epoca in cui l'errore sul VS è minimo
 
         # batch mode
         for epoch in range(MAX_EPOCHS):
@@ -94,9 +94,10 @@ class NeuralNetwork:
                 best_net = self
 
         print("Validation loss is minimum at epoch:", best_epoch)
-        print(best_net)
 
         plot(np.arange(MAX_EPOCHS), e_loss_train, e_loss_val)
+
+        return best_net
 
     # Predice i target di ciascun elemento del Dataset (anche se singleton)
     # Costruisce una matrice di predizioni dove la i-esima colonna corrisponde
@@ -202,12 +203,12 @@ class Layer:
         self.dEn_db = np.sum(self.deltas, axis=1)
 
         # La derivata dE/dW sull'intero DS è la somma per n=1 a N di dE/dW sul singolo item
-        # self.dE_dW += self.dEn_dW  # todo - probabilmente da togliere
-        self.dE_dW = self.dEn_dW  # todo - forse lasciare questo
+        # self.dE_dW += self.dEn_dW  # probabilmente da togliere
+        self.dE_dW = self.dEn_dW  # forse lasciare questo
 
         # La derivata dE/db sull'intero DS è la somma per n=1 a N di dE/db sul singolo item
-        # self.dE_db += self.dEn_db  # todo - probabilmente da togliere
-        self.dE_db = self.dEn_db  # todo - forse lasciare questo
+        # self.dE_db += self.dEn_db  # probabilmente da togliere
+        self.dE_db = self.dEn_db  # forse lasciare questo
 
         """print(self.dE_dW) # dbg
         print("")"""
@@ -237,11 +238,17 @@ class Layer:
 
 if __name__ == '__main__':
     mndata = MNIST(path="data", return_type="numpy", mode="randomly_binarized")
-    X_train, targets_train = mndata.load_training()  # 60.000 immagini da 28*28 colonne (features)
-    X_val, targets_val = mndata.load_testing()  # 10.000 immagini da 28*28 colonne (features)
+    X_train, targets_train = mndata.load_training()  # 60.000 immagini da 28*28 colonne (features) ciascuna
+    X_val, targets_val = mndata.load_testing()  # 10.000 immagini da 28*28 colonne (features) ciascuna
+
+    # Ricavo il test set spaccando in due metà uguali il validation set
+    # Il validation set passa da 10.000 immagini a 5000 immagini
+    X_val, X_test = np.split(X_val, 2)  # 5000 immagini da 28*28 colonne (feature) ciascuna
+    targets_val, targets_test = np.split(targets_val, 2)
 
     targets_train = one_hot(targets_train)
     targets_val = one_hot(targets_val)
+    targets_test = one_hot(targets_test)
 
     net = NeuralNetwork()
     d = np.shape(X_train)[1]  # dimensione dell'input = 28 * 28
@@ -253,4 +260,9 @@ if __name__ == '__main__':
 
     net.build()
 
-    net.fit(X_train, targets_train, X_val, targets_val)
+    best_net = net.fit(X_train, targets_train, X_val, targets_val)
+
+    # Todo - testare sul test set le prestazioni del modello
+    # Una lista di metriche che posso ri-implementare per testare il mio classificatore
+    # https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
+    # Nota che il dataset MNIST è bilanciato
