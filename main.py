@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from mnist.loader import MNIST
+from sklearn.metrics import accuracy_score
 
 from activation_functions import *
 from loss_functions import *
@@ -61,8 +62,7 @@ class NeuralNetwork:
             print(layer.bias)
             print("")
 
-    def fit(self, X_train, targets_train, X_val, targets_val):
-        MAX_EPOCHS = 50
+    def fit(self, X_train, targets_train, X_val, targets_val, max_epochs=50):
         e_loss_train = []
         e_loss_val = []
 
@@ -74,7 +74,7 @@ class NeuralNetwork:
         best_epoch = 0  # epoca in cui l'errore sul VS è minimo
 
         # batch mode
-        for epoch in range(MAX_EPOCHS):
+        for epoch in range(max_epochs):
             predictions_train = self.predict(X_train)
             self.back_prop(targets_train, cross_entropy)
             self.learning_rule(l_rate=0.000001, momentum=0.9)  # tuning here
@@ -95,7 +95,7 @@ class NeuralNetwork:
 
         print("Validation loss is minimum at epoch:", best_epoch)
 
-        plot(np.arange(MAX_EPOCHS), e_loss_train, e_loss_val)
+        plot(np.arange(max_epochs), e_loss_train, e_loss_val)
 
         return best_net
 
@@ -262,9 +262,9 @@ if __name__ == '__main__':
 
     net.build()
 
-    best_net = net.fit(X_train, targets_train, X_val, targets_val)
+    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=50)
 
-    # Todo - testare sul test set le prestazioni del modello
+    # Todo - testare sul test set le prestazioni del modello ottenuto
     # Una lista di metriche che posso ri-implementare per testare il mio classificatore
     # https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
     # Nota che il dataset MNIST è bilanciato
