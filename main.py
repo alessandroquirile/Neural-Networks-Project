@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 from mnist.loader import MNIST
 from activation_functions import *
 from loss_functions import *
+from sklearn.utils import shuffle
 
 
 def accuracy_score(targets, predictions):
@@ -232,10 +233,14 @@ if __name__ == '__main__':
     X_train, targets_train = mndata.load_training()  # 60.000 immagini da 28*28 colonne (features) ciascuna
     X_val, targets_val = mndata.load_testing()  # 10.000 immagini da 28*28 colonne (features) ciascuna
 
+    X_train, targets_train = shuffle(X_train, targets_train.T)
+    X_val, targets_val = shuffle(X_val, targets_val.T)
+
     # Ricavo il test set spaccando in due metà uguali il validation set
     # Il validation set passa da 10.000 immagini a 5000 immagini
     X_val, X_test = np.split(X_val, 2)  # 5000 immagini da 28*28 colonne (feature) ciascuna
     targets_val, targets_test = np.split(targets_val, 2)
+    X_test, targets_test = shuffle(X_test, targets_test.T)
 
     targets_train = one_hot(targets_train)
     targets_val = one_hot(targets_val)
