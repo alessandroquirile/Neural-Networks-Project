@@ -1,10 +1,20 @@
 import numpy as np
 from matplotlib import pyplot as plt
 from mnist.loader import MNIST
-from sklearn.metrics import accuracy_score
-
 from activation_functions import *
 from loss_functions import *
+
+
+def accuracy_score(targets, predictions):
+    correct_predictions = 0
+    for item in range(np.shape(predictions)[1]):
+        # print(predictions[:, item])
+        argmax_idx = np.argmax(predictions[:, item])
+        # print("argmax idx", argmax_idx)
+        # print(targets_test[:, item])
+        if targets[argmax_idx, item] == 1:
+            correct_predictions += 1
+    return correct_predictions / np.shape(predictions)[1]
 
 
 def generate_data(n_items, n_features, n_classes):
@@ -13,9 +23,11 @@ def generate_data(n_items, n_features, n_classes):
     targets = one_hot(targets)
     return X, targets
 
+
 # La 1-hot encoding per un'etichetta y restituisce un vettore colonna 1-hot
 def one_hot(targets):
-    return np.asmatrix(np.eye(np.max(targets) + 1)[targets]).T  # vettore colonna
+    return np.asmatrix(np.eye(10)[targets]).T  # vettore colonna
+
 
 def plot(epochs, loss_train, loss_val):
     plt.plot(epochs, loss_train)
@@ -26,6 +38,7 @@ def plot(epochs, loss_train, loss_val):
     plt.grid(True)
     plt.show()
 
+
 def calculate_gain(activation):
     if activation == sigmoid or activation == identity:
         return 1
@@ -33,6 +46,7 @@ def calculate_gain(activation):
         return np.sqrt(2)
     elif activation == tanh:
         return 5 / 3
+
 
 class NeuralNetwork:
 
@@ -77,7 +91,7 @@ class NeuralNetwork:
         for epoch in range(max_epochs):
             predictions_train = self.predict(X_train)
             self.back_prop(targets_train, cross_entropy)
-            self.learning_rule(l_rate=0.000001, momentum=0.9)  # tuning here
+            self.learning_rule(l_rate=0.00001, momentum=0.9)  # tuning here
             loss_train = cross_entropy(predictions_train, targets_train)
             e_loss_train.append(loss_train)
 
@@ -86,7 +100,8 @@ class NeuralNetwork:
             loss_val = cross_entropy(predictions_val, targets_val)
             e_loss_val.append(loss_val)
 
-            print("E(%d) on TrS is:" % epoch, loss_train, " on VS is:", loss_val)
+            print("E(%d) on TrS is:" % epoch, loss_train, " on VS is:", loss_val, " Accuracy:",
+                  accuracy_score(targets_val, predictions_val) * 100, "%")
 
             if loss_val < min_loss_val:
                 min_loss_val = loss_val
@@ -126,14 +141,13 @@ class NeuralNetwork:
             layer.update_weights(l_rate, momentum)
             layer.update_bias(l_rate, momentum)
 
+
 class Layer:
 
     def __init__(self, neurons, type=None, activation=None):
         # n è l'n-esimo item se online; altrimenti l'intero DS
         self.dE_dW = None  # matrice di derivate dE/dW dove W è la matrice del layer sull'intero DS
         self.dE_db = None  # matrice di derivate dE/db dove b è il vettore colonna bias sull'intero DS
-        # self.dEn_db = None  # matrice di derivate dE^(n)/db dove b è il vettore colonna bias sull'item n-esimo
-        # self.dEn_dW = None  # matrice di derivate dE^(n)/dW dove W è la matrice del layer sull'item n-esimo
         self.dact_a = None  # derivata della funzione di attivazione nel punto a
         self.out = None  # matrice di output per il layer
         self.weights = None  # matrice di pesi in ingresso
@@ -193,39 +207,14 @@ class Layer:
             self.deltas = np.multiply(self.dact_a, np.dot(next_layer.weights.T, next_layer.deltas))
 
         # Una volta calcolati i delta dei nodi di output e quelli interni, occorre calcolare
-        # La derivata della funzione E rispetto al generico peso wij [formula 1.5] sull'istanza n-esima
+        # La derivata della funzione E rispetto al generico peso wij [formula 1.5]
         # Quindi costruisco una matrice di derivate una per ogni matrice di pesi (quindi una per ogni livello)
         # Sarà sufficiente moltiplicare (righe per colonne) self.deltas con gli output z del layer a sinistra
-        # self.dEn_dW = self.deltas * prev_layer.out.T
         self.dE_dW = self.deltas * prev_layer.out.T
 
         # Per ogni layer: dE/db = dE/da * da/db = dE/da * 1 = dE/da = delta
         # Quindi la derivata di E risp. al vettore colonna bias è self.deltas
-        # self.dEn_db = np.sum(self.deltas, axis=1)
         self.dE_db = np.sum(self.deltas, axis=1)
-
-        # La derivata dE/dW sull'intero DS è la somma per n=1 a N di dE/dW sul singolo item
-        # self.dE_dW += self.dEn_dW  # probabilmente da togliere
-        # self.dE_dW = self.dEn_dW  # forse lasciare questo
-
-        # La derivata dE/db sull'intero DS è la somma per n=1 a N di dE/db sul singolo item
-        # self.dE_db += self.dEn_db  # probabilmente da togliere
-        # self.dE_db = self.dEn_db  # forse lasciare questo
-
-        """print(self.dE_dW) # dbg
-        print("")"""
-
-        # dbg
-        """print("deltas shape:", np.shape(self.deltas))
-        # print(self.deltas)
-        print("prev_layer.out.T shape:", np.shape(prev_layer.out.T))
-        # print(prev_layer.out.T)
-
-        print("dE/dW shape:", np.shape(self.dE_dW))  # dE/dW sull'n-esima istanza (se online), n-esima epoca (se batch)
-        # print(self.dE_dW)
-        print("dE/db shape:", np.shape(self.dE_db))  # dE/db sull'n-esima istanza (se online), n-esima epoca (se batch)
-        # print(self.dE_db)
-        print("")"""
 
     def update_weights(self, l_rate, momentum):
         # Momentum GD
@@ -262,9 +251,10 @@ if __name__ == '__main__':
 
     net.build()
 
-    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=50)
+    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=200)
 
-    # Todo - testare sul test set le prestazioni del modello ottenuto
     # Una lista di metriche che posso ri-implementare per testare il mio classificatore
     # https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
     # Nota che il dataset MNIST è bilanciato
+    predictions = best_net.predict(X_test)
+    print("Accuracy score on test set is:", accuracy_score(targets_test, predictions) * 100, "%")
