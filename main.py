@@ -256,7 +256,7 @@ if __name__ == '__main__':
 
     net.build()
 
-    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=200)
+    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=50)
 
     # Una lista di metriche che posso ri-implementare per testare il mio classificatore
     # https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
