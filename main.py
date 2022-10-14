@@ -1,9 +1,19 @@
-import numpy as np
 from matplotlib import pyplot as plt
 from mnist.loader import MNIST
+from sklearn.utils import shuffle
+
 from activation_functions import *
 from loss_functions import *
-from sklearn.utils import shuffle
+
+
+# Stampa per intero un array numpy
+def fullprint(*args, **kwargs):
+    from pprint import pprint
+    import numpy
+    opt = numpy.get_printoptions()
+    numpy.set_printoptions(threshold=numpy.inf)
+    pprint(*args, **kwargs)
+    numpy.set_printoptions(**opt)
 
 
 def accuracy_score(targets, predictions):
@@ -72,9 +82,9 @@ class NeuralNetwork:
             print("type:", layer.type)
             print("act:", layer.activation)
             print("weights:", np.shape(layer.weights))
-            print(layer.weights)  # input weight matrix
+            # print(layer.weights)  # input weight matrix
             print("bias:", np.shape(layer.bias))
-            print(layer.bias)
+            # print(layer.bias)
             print("")
 
     def fit(self, X_train, targets_train, X_val, targets_val, max_epochs=50):
@@ -92,7 +102,7 @@ class NeuralNetwork:
         for epoch in range(max_epochs):
             predictions_train = self.predict(X_train)
             self.back_prop(targets_train, cross_entropy)
-            self.learning_rule(l_rate=0.00001, momentum=0.9)  # tuning here
+            self.learning_rule(l_rate=0.001, momentum=0.9)  # tuning here
             loss_train = cross_entropy(predictions_train, targets_train)
             e_loss_train.append(loss_train)
 
@@ -165,6 +175,8 @@ class Layer:
         # Gaussian
         self.weights = np.asmatrix(np.random.normal(-0.1, 0.02, (self.neurons, prev_layer_neurons)))
         self.bias = np.asmatrix(np.random.normal(-0.1, 0.02, self.neurons)).T  # vettore colonna
+        """self.weights = np.asmatrix(np.random.normal(0, 0.1, (self.neurons, prev_layer_neurons)))
+        self.bias = np.asmatrix(np.random.normal(0, 0.1, self.neurons)).T  # vettore colonna"""
 
         # self.xavier_init(prev_layer_neurons)
 
@@ -188,7 +200,6 @@ class Layer:
             self.bias = np.asmatrix(np.random.uniform(a, -a, self.neurons)).T  # vettore colonna
 
     def forward_prop_step(self, z):
-        # Se il layer è di input, si fa un un mirroring del vettore in ingresso
         if self.type == "input":
             self.out = z
         else:
@@ -229,34 +240,39 @@ class Layer:
 
 
 if __name__ == '__main__':
-    mndata = MNIST(path="data", return_type="numpy", mode="randomly_binarized")
-    X_train, targets_train = mndata.load_training()  # 60.000 immagini da 28*28 colonne (features) ciascuna
-    X_val, targets_val = mndata.load_testing()  # 10.000 immagini da 28*28 colonne (features) ciascuna
+    mndata = MNIST(path="data", return_type="numpy")
+    X, labels = mndata.load_training()
 
-    X_train, targets_train = shuffle(X_train, targets_train.T)
-    X_val, targets_val = shuffle(X_val, targets_val.T)
+    # Rescale within [0;1]
+    X = X / 255
 
-    # Ricavo il test set spaccando in due metà uguali il validation set
-    # Il validation set passa da 10.000 immagini a 5000 immagini
-    X_val, X_test = np.split(X_val, 2)  # 5000 immagini da 28*28 colonne (feature) ciascuna
-    targets_val, targets_test = np.split(targets_val, 2)
-    X_test, targets_test = shuffle(X_test, targets_test.T)
+    X, labels = shuffle(X, labels.T)
 
-    targets_train = one_hot(targets_train)
-    targets_val = one_hot(targets_val)
-    targets_test = one_hot(targets_test)
+    labels = one_hot(labels)
+
+    # Per questioni di velocità riduco il dataset e considero i primi 500 item
+    X_r = X[0:500, :]
+    labels_r = labels[:, 0:500]
+
+    # Split
+    X_train = X_r[0:200, :]
+    targets_train = labels_r[:, 0:200]
+    X_val = X_r[200:400, :]
+    targets_val = labels_r[:, 200:400]
+    X_test = X_r[400:500, :]
+    targets_test = labels_r[:, 400:500]
 
     net = NeuralNetwork()
     d = np.shape(X_train)[1]  # dimensione dell'input = 28 * 28
     c = np.shape(targets_train)[0]  # dimensione dell'output = 10
 
-    for m in (d, 1, c):
+    for m in (d, 50, c):
         layer = Layer(m)  # costruisco un layer con m neuroni
         net.add_layer(layer)
 
     net.build()
 
-    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=50)
+    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=200)
 
     # Una lista di metriche che posso ri-implementare per testare il mio classificatore
     # https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
