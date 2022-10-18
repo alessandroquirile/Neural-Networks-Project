@@ -164,12 +164,12 @@ class Layer:
         self.set_activation()
 
         # Gaussian
-        """self.weights = np.asmatrix(np.random.normal(-0.1, 0.02, (self.neurons, prev_layer_neurons)))
-        self.bias = np.asmatrix(np.random.normal(-0.1, 0.02, self.neurons)).T"""  # vettore colonna
+        self.weights = np.asmatrix(np.random.normal(-0.1, 0.02, (self.neurons, prev_layer_neurons)))
+        self.bias = np.asmatrix(np.random.normal(-0.1, 0.02, self.neurons)).T  # vettore colonna
 
         # DBG
-        self.weights = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
-        self.bias = np.asmatrix(np.ones(self.neurons)).T  # vettore colonna
+        """self.weights = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
+        self.bias = np.asmatrix(np.ones(self.neurons)).T  # vettore colonna"""
 
         # self.xavier_init(prev_layer_neurons)
 
@@ -228,7 +228,7 @@ if __name__ == '__main__':
     # Rescale whole dataset within [0;1]
     X = X / 255
 
-    # X, labels = shuffle(X, labels.T)
+    X, labels = shuffle(X, labels.T)
 
     labels = one_hot(labels)
 
@@ -239,10 +239,10 @@ if __name__ == '__main__':
     # Split
     X_train = X_r[0:200, :]
     targets_train = labels_r[:, 0:200]
-    """X_val = X_r[200:400, :]
+    X_val = X_r[200:400, :]
     targets_val = labels_r[:, 200:400]
     X_test = X_r[400:500, :]
-    targets_test = labels_r[:, 400:500]"""
+    targets_test = labels_r[:, 400:500]
 
     net = NeuralNetwork()
     d = np.shape(X_train)[1]  # dimensione dell'input = 28x28
@@ -254,14 +254,10 @@ if __name__ == '__main__':
 
     net.build()
 
-    # Su MATLAB nelle stesse condizioni: 460.5170
-    predictions = net.predict(X_train)
-    print(cross_entropy(predictions, targets_train))
-
-    """best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=200)
+    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=200)
 
     # Una lista di metriche che posso ri-implementare per testare il mio classificatore
     # https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
     # Nota che il dataset MNIST è bilanciato
     predictions = best_net.predict(X_test)
-    print("Accuracy score on test set is:", accuracy_score(targets_test, predictions) * 100, "%")"""
+    print("Accuracy score on test set is:", accuracy_score(targets_test, predictions) * 100, "%")
