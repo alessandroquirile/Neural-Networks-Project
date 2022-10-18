@@ -1,53 +1,9 @@
-from matplotlib import pyplot as plt
 from mnist.loader import MNIST
 from sklearn.utils import shuffle
 
 from activation_functions import *
 from loss_functions import *
-
-
-# Stampa per intero un array numpy
-def fullprint(*args, **kwargs):
-    from pprint import pprint
-    import numpy
-    opt = numpy.get_printoptions()
-    numpy.set_printoptions(threshold=numpy.inf)
-    pprint(*args, **kwargs)
-    numpy.set_printoptions(**opt)
-
-
-def accuracy_score(targets, predictions):
-    correct_predictions = 0
-    for item in range(np.shape(predictions)[1]):
-        # print(predictions[:, item])
-        argmax_idx = np.argmax(predictions[:, item])
-        # print("argmax idx", argmax_idx)
-        # print(targets_test[:, item])
-        if targets[argmax_idx, item] == 1:
-            correct_predictions += 1
-    return correct_predictions / np.shape(predictions)[1]
-
-
-def generate_data(n_items, n_features, n_classes):
-    X = np.asmatrix(np.random.normal(size=(n_items, n_features)))
-    targets = np.asarray(np.random.randint(n_classes, size=n_items))
-    targets = one_hot(targets)
-    return X, targets
-
-
-# La 1-hot encoding per un'etichetta y restituisce un vettore colonna 1-hot
-def one_hot(targets):
-    return np.asmatrix(np.eye(10)[targets]).T  # vettore colonna
-
-
-def plot(epochs, loss_train, loss_val):
-    plt.plot(epochs, loss_train)
-    plt.plot(epochs, loss_val, color="orange")
-    plt.legend(["Training Loss", "Validation Loss"])
-    plt.xlabel("Epochs")
-    plt.ylabel("Loss")
-    plt.grid(True)
-    plt.show()
+from utils import *
 
 
 class NeuralNetwork:
@@ -156,22 +112,14 @@ class Layer:
         self.bias = None  # bias nel layer
         self.w_sum = None  # matrice delle somme pesate
         self.neurons = neurons  # numero di neuroni nel layer
-        self.type = type  # se il layer è input, hidden o output
+        self.type = type  # se il layer è input, hidden oppure output
         self.activation = activation  # funzione di attivazione associata al layer
         self.deltas = None  # vettore colonna di delta
 
     def configure(self, prev_layer_neurons):
         self.set_activation()
-
-        # Gaussian
         self.weights = np.asmatrix(np.random.normal(-0.1, 0.02, (self.neurons, prev_layer_neurons)))
         self.bias = np.asmatrix(np.random.normal(-0.1, 0.02, self.neurons)).T  # vettore colonna
-
-        # DBG
-        """self.weights = np.asmatrix(np.ones((self.neurons, prev_layer_neurons)))
-        self.bias = np.asmatrix(np.ones(self.neurons)).T  # vettore colonna"""
-
-        # self.xavier_init(prev_layer_neurons)
 
     def set_activation(self):
         if self.activation is None:

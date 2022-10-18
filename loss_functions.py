@@ -1,5 +1,4 @@
 from post_processing_functions import *
-from scipy.special import xlog1py
 
 
 def sum_of_squares(y, t, derivative=False):
@@ -19,4 +18,4 @@ def cross_entropy(y, t, derivative=False, post_process=True):
     else:
         if derivative:
             return -np.sum(np.divide(t, y), axis=1)
-        return -np.sum(np.sum(xlog1py(t, y), axis=0))
+        return -np.sum(np.sum(np.multiply(t, y), axis=0))
