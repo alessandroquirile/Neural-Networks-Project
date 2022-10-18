@@ -1,3 +1,4 @@
+import numpy as np
 from mnist.loader import MNIST
 from sklearn.utils import shuffle
 
@@ -210,3 +211,6 @@ if __name__ == '__main__':
     predictions = best_net.predict(X_test)
     accuracy = accuracy_score(targets_test, predictions) * 100
     print("Accuracy score on test set is:", accuracy, "%")
+
+    print(one_hot_to_label(targets_test))
+    print(one_hot_to_label(predictions))
