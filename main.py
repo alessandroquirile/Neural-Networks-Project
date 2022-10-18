@@ -208,4 +208,5 @@ if __name__ == '__main__':
     # https://scikit-learn.org/stable/modules/classes.html#module-sklearn.metrics
     # Nota che il dataset MNIST è bilanciato
     predictions = best_net.predict(X_test)
-    print("Accuracy score on test set is:", accuracy_score(targets_test, predictions) * 100, "%")
+    accuracy = accuracy_score(targets_test, predictions) * 100
+    print("Accuracy score on test set is:", accuracy, "%")

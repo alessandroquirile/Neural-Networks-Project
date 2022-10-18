@@ -1,6 +1,8 @@
 import numpy as np
 from matplotlib import pyplot as plt
 
+from post_processing_functions import softmax
+
 
 # Stampa per intero un array numpy
 def fullprint(*args, **kwargs):
@@ -13,12 +15,13 @@ def fullprint(*args, **kwargs):
 
 
 def accuracy_score(targets, predictions):
+    predictions = softmax(predictions)
     correct_predictions = 0
     for item in range(np.shape(predictions)[1]):
         # print(predictions[:, item])
         argmax_idx = np.argmax(predictions[:, item])
         # print("argmax idx", argmax_idx)
-        # print(targets_test[:, item])
+        # print(targets[:, item])
         if targets[argmax_idx, item] == 1:
             correct_predictions += 1
     return correct_predictions / np.shape(predictions)[1]
