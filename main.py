@@ -1,4 +1,3 @@
-import numpy as np
 from mnist.loader import MNIST
 from sklearn.utils import shuffle
 
@@ -120,7 +119,8 @@ class Layer:
     def configure(self, prev_layer_neurons):
         self.set_activation()
         self.weights = np.asmatrix(np.random.normal(-0.1, 0.02, (self.neurons, prev_layer_neurons)))
-        self.bias = np.asmatrix(np.random.normal(-0.1, 0.02, self.neurons)).T  # vettore colonna
+        self.bias = np.asmatrix(np.zeros(self.neurons)).T
+        # self.bias = np.asmatrix(np.random.normal(-0.1, 0.02, self.neurons)).T  # vettore colonna
 
     def set_activation(self):
         if self.activation is None:
