@@ -171,6 +171,9 @@ if __name__ == '__main__':
     X_val, X_train = np.hsplit(X_train, [10000])
     targets_val, targets_train = np.hsplit(targets_train, [10000])
 
+    if not balanced(targets_train, targets_val, targets_test):
+        raise Exception("Classes are not balanced")
+
     # One hot
     targets_train = one_hot(targets_train)
     targets_val = one_hot(targets_val)
@@ -188,8 +191,7 @@ if __name__ == '__main__':
 
     best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=50)
 
-    # Affinché l'accuracy sia una metrica sufficiente è necessario valutare il bilanciamento delle classi
-    # in ciascun DS
+    # Testing
     predictions_test = best_net.predict(X_test)
-    accuracy_test = accuracy_score(targets_test, predictions_test) * 100
-    print(f"Accuracy score on test set is: {accuracy_test} %")
+    accuracy_test = accuracy_score(targets_test, predictions_test)
+    print(f"Accuracy score on test set is: {accuracy_test * 100} %")
