@@ -170,7 +170,6 @@ if __name__ == '__main__':
     # Split: i 60.000 dati di training li divido in 50.000 per il training e 10.000 per il validation
     X_val, X_train = np.hsplit(X_train, [10000])
     targets_val, targets_train = np.hsplit(targets_train, [10000])
-
     if not balanced(targets_train, targets_val, targets_test):
         raise Exception("Classes are not balanced")
 
