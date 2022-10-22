@@ -108,11 +108,15 @@ class Layer:
         self.type = type  # input, hidden or output
         self.activation = activation  # activation function
         self.deltas = None  # for back-prop
+        self.diff_w = None
+        self.diff_b = None
 
     def configure(self, prev_layer_neurons):
         self.set_activation()
         self.weights = np.asmatrix(np.random.uniform(-0.02, 0.02, (self.neurons, prev_layer_neurons)))
         self.bias = np.asmatrix(np.random.uniform(-0.02, 0.02, self.neurons)).T
+        self.diff_w = np.asmatrix(np.zeros(shape=np.shape(self.weights)))
+        self.diff_b = np.asmatrix(np.zeros(shape=np.shape(self.bias)))
 
     def set_activation(self):
         if self.activation is None:
@@ -143,14 +147,12 @@ class Layer:
         self.dE_db = np.sum(self.deltas, axis=1)
 
     def update_weights(self, l_rate, momentum):
-        # Momentum GD - todo
-        self.weights = self.weights - l_rate * self.dE_dW
-        # self.weights = -l_rate * self.dE_dW + momentum * self.weights
+        self.diff_w = l_rate * self.dE_dW + momentum * self.diff_w
+        self.weights = self.weights - self.diff_w
 
     def update_bias(self, l_rate, momentum):
-        # Momentum GD - todo
-        self.bias = self.bias - l_rate * self.dE_db
-        # self.bias = -l_rate * self.dE_db + momentum * self.bias
+        self.diff_b = l_rate * self.dE_db + momentum * self.diff_b
+        self.bias = self.bias - self.diff_b
 
 
 if __name__ == '__main__':
