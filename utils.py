@@ -27,19 +27,10 @@ def accuracy_score(targets, predictions):
     return correct_predictions / np.shape(predictions)[1]
 
 
-def generate_data(n_items, n_features, n_classes):
-    X = np.asmatrix(np.random.normal(size=(n_items, n_features)))
-    targets = np.asarray(np.random.randint(n_classes, size=n_items))
-    targets = one_hot(targets)
-    return X, targets
-
-
-# La 1-hot encoding per un'etichetta y restituisce un vettore colonna 1-hot
 def one_hot(targets):
     return np.asmatrix(np.eye(10)[targets]).T  # vettore colonna
 
 
-# Converte la codifica one-hot in quella numerica
 def one_hot_to_label(targets):
     return np.argmax(targets, axis=0)
 

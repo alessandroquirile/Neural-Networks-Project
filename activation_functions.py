@@ -22,10 +22,3 @@ def relu(a, derivative=False):
     if derivative:
         return (a > 0) * 1
     return f_a
-
-
-def tanh(a, derivative=False):
-    f_a = np.divide(np.exp(a) - np.exp(-a), np.exp(a) + np.exp(-a))
-    if derivative:
-        return 1 - np.power(f_a, 2)
-    return f_a

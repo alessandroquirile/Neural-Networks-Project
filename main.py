@@ -2,7 +2,7 @@ from mnist.loader import MNIST
 from sklearn.utils import shuffle
 
 from activation_functions import *
-from loss_functions import *
+from loss_functions import cross_entropy
 from utils import *
 
 
@@ -58,15 +58,17 @@ class NeuralNetwork:
             loss_val = cross_entropy(predictions_val, targets_val)
             e_loss_val.append(loss_val)
 
-            print("E(%d) on TrS is:" % epoch, loss_train, " on VS is:", loss_val, " Accuracy:",
-                  accuracy_score(targets_val, predictions_val) * 100, "%")
+            print(f"E({epoch}) "
+                  f"train_loss: {loss_train} "
+                  f"val_loss: {loss_val} "
+                  f"val_acc: {accuracy_score(targets_val, predictions_val) * 100} %")
 
             if loss_val < min_loss_val:
                 min_loss_val = loss_val
                 best_epoch = epoch
                 best_net = self
 
-        print(f"Validation loss is minimum as epoch {best_epoch}")
+        print(f"Validation loss is minimum at epoch {best_epoch}")
 
         plot(np.arange(max_epochs), e_loss_train, e_loss_val)
 
@@ -117,7 +119,7 @@ class Layer:
             if self.type == "hidden":
                 self.activation = relu
             elif self.type == "output":
-                self.activation = identity  # will be softmax in cross entropy calculation
+                self.activation = identity
 
     def forward_prop_step(self, z):
         if self.type == "input":
@@ -141,12 +143,12 @@ class Layer:
         self.dE_db = np.sum(self.deltas, axis=1)
 
     def update_weights(self, l_rate, momentum):
-        # Momentum GD - todo: forse da fixare
+        # Momentum GD - todo
         self.weights = self.weights - l_rate * self.dE_dW
         # self.weights = -l_rate * self.dE_dW + momentum * self.weights
 
     def update_bias(self, l_rate, momentum):
-        # Momentum GD - todo: forse da fixare
+        # Momentum GD - todo
         self.bias = self.bias - l_rate * self.dE_db
         # self.bias = -l_rate * self.dE_db + momentum * self.bias
 
@@ -185,3 +187,9 @@ if __name__ == '__main__':
     net.build()
 
     best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=50)
+
+    # Affinché l'accuracy sia una metrica sufficiente è necessario valutare il bilanciamento delle classi
+    # in ciascun DS
+    predictions_test = best_net.predict(X_test)
+    accuracy_test = accuracy_score(targets_test, predictions_test) * 100
+    print(f"Accuracy score on test set is: {accuracy_test} %")
