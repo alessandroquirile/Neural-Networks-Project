@@ -38,6 +38,7 @@ def generate_data(n_items, n_features, n_classes):
 def one_hot(targets):
     return np.asmatrix(np.eye(10)[targets]).T  # vettore colonna
 
+
 # Converte la codifica one-hot in quella numerica
 def one_hot_to_label(targets):
     return np.argmax(targets, axis=0)
