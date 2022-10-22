@@ -1,4 +1,5 @@
 from mnist.loader import MNIST
+from sklearn.utils import shuffle
 
 from activation_functions import *
 from loss_functions import *
@@ -10,7 +11,7 @@ class NeuralNetwork:
     def __init__(self):
         self.layers = []
 
-    def add_layer(self, layer):
+    def add(self, layer):
         self.layers.append(layer)
 
     def build(self):
@@ -153,31 +154,36 @@ class Layer:
 if __name__ == '__main__':
     mndata = MNIST(path="data", return_type="numpy")
     X_train, targets_train = mndata.load_training()  # 60.000 images, 28*28 features
-    X_val, targets_val = mndata.load_testing()  # 10.000 images, 28*28 features
+    X_test, targets_test = mndata.load_testing()  # 10.000 images, 28*28 features
 
+    # Data pre processing
     X_train = X_train / 255  # normalization within [0;1]
-    X_val = X_val / 255  # normalization within [0;1]
+    X_test = X_test / 255  # normalization within [0;1]
     X_train = X_train.T  # data transposition
-    X_val = X_val.T  # data transposition
+    X_test = X_test.T  # data transposition
 
-    # Getting the test set splitting the validation set in two equal parts
-    # Validation set size decreases from 10.000 to 5000 (of course)
-    X_val, X_test = np.hsplit(X_val, 2)  # 5000 images, 28*28 features
-    targets_val, targets_test = np.hsplit(targets_val, 2)
+    # Split: i 60.000 dati di training li divido in 50.000 per il training e 10.000 per il validation
+    # Valutare uno shuffle
+    X_val, X_train = np.hsplit(X_train, [10000])
+    targets_val, targets_train = np.hsplit(targets_train, [10000])
 
+    # One hot
     targets_train = one_hot(targets_train)
     targets_val = one_hot(targets_val)
     targets_test = one_hot(targets_test)
+
+    # DBG
+    print("Train:", np.shape(X_train), np.shape(targets_train))
+    print("Validation:", np.shape(X_val), np.shape(targets_val))
+    print("Test:", np.shape(X_test), np.shape(targets_test))
 
     net = NeuralNetwork()
     d = np.shape(X_train)[0]  # number of features, 28x28
     c = np.shape(targets_train)[0]  # number of classes, 10
 
-    # Shallow network with 1 hidden neuron
-    # That is 784, 1, 10
+    # Net creation
     for m in (d, 100, c):
-        layer = Layer(m)
-        net.add_layer(layer)
+        net.add(Layer(m))
 
     net.build()
 
