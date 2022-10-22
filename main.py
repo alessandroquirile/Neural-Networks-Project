@@ -1,5 +1,4 @@
 from mnist.loader import MNIST
-from sklearn.utils import shuffle
 
 from activation_functions import *
 from loss_functions import *
@@ -21,6 +20,18 @@ class NeuralNetwork:
             else:
                 layer.type = "output" if i == len(self.layers) - 1 else "hidden"
                 layer.configure(self.layers[i - 1].neurons)
+
+    def summary(self):
+        for i, layer in enumerate(self.layers):
+            print("Layer", i)  # layer id
+            print("neurons:", layer.neurons)
+            print("type:", layer.type)
+            print("act:", layer.activation)
+            print("weights:", np.shape(layer.weights))
+            # print(layer.weights)  # input weight matrix
+            print("bias:", np.shape(layer.bias))
+            # print(layer.bias)
+            print("")
 
     def fit(self, X_train, targets_train, X_val, targets_val, max_epochs=50):
         e_loss_train = []
@@ -62,7 +73,7 @@ class NeuralNetwork:
 
     # Matrix of predictions where the i-th column corresponds to the i-th item
     def predict(self, dataset):
-        z = dataset.T
+        z = dataset
         for layer in self.layers:
             z = layer.forward_prop_step(z)
         return z
@@ -146,23 +157,20 @@ if __name__ == '__main__':
 
     X_train = X_train / 255  # normalization within [0;1]
     X_val = X_val / 255  # normalization within [0;1]
-
-    # Shuffle only if online or mini-batch mode
-    # X_train, targets_train = shuffle(X_train, targets_train.T)
-    # X_val, targets_val = shuffle(X_val, targets_val.T)
+    X_train = X_train.T  # data transposition
+    X_val = X_val.T  # data transposition
 
     # Getting the test set splitting the validation set in two equal parts
     # Validation set size decreases from 10.000 to 5000 (of course)
-    X_val, X_test = np.split(X_val, 2)  # 5000 images, 28*28 features
-    targets_val, targets_test = np.split(targets_val, 2)
-    X_test, targets_test = shuffle(X_test, targets_test.T)
+    X_val, X_test = np.hsplit(X_val, 2)  # 5000 images, 28*28 features
+    targets_val, targets_test = np.hsplit(targets_val, 2)
 
     targets_train = one_hot(targets_train)
     targets_val = one_hot(targets_val)
     targets_test = one_hot(targets_test)
 
     net = NeuralNetwork()
-    d = np.shape(X_train)[1]  # number of features, 28x28
+    d = np.shape(X_train)[0]  # number of features, 28x28
     c = np.shape(targets_train)[0]  # number of classes, 10
 
     # Shallow network with 1 hidden neuron
