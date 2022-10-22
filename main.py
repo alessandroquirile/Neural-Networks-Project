@@ -147,8 +147,9 @@ if __name__ == '__main__':
     X_train = X_train / 255  # normalization within [0;1]
     X_val = X_val / 255  # normalization within [0;1]
 
-    X_train, targets_train = shuffle(X_train, targets_train.T)
-    X_val, targets_val = shuffle(X_val, targets_val.T)
+    # Shuffle only if online or mini-batch mode
+    # X_train, targets_train = shuffle(X_train, targets_train.T)
+    # X_val, targets_val = shuffle(X_val, targets_val.T)
 
     # Getting the test set splitting the validation set in two equal parts
     # Validation set size decreases from 10.000 to 5000 (of course)
