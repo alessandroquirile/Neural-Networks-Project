@@ -156,6 +156,9 @@ if __name__ == '__main__':
     X_train, targets_train = mndata.load_training()  # 60.000 images, 28*28 features
     X_test, targets_test = mndata.load_testing()  # 10.000 images, 28*28 features
 
+    # In modo tale che lo split sia casuale
+    X_train, targets_train = shuffle(X_train, targets_train.T)
+
     # Data pre processing
     X_train = X_train / 255  # normalization within [0;1]
     X_test = X_test / 255  # normalization within [0;1]
@@ -163,7 +166,6 @@ if __name__ == '__main__':
     X_test = X_test.T  # data transposition
 
     # Split: i 60.000 dati di training li divido in 50.000 per il training e 10.000 per il validation
-    # Valutare uno shuffle
     X_val, X_train = np.hsplit(X_train, [10000])
     targets_val, targets_train = np.hsplit(targets_train, [10000])
 
@@ -171,11 +173,6 @@ if __name__ == '__main__':
     targets_train = one_hot(targets_train)
     targets_val = one_hot(targets_val)
     targets_test = one_hot(targets_test)
-
-    # DBG
-    print("Train:", np.shape(X_train), np.shape(targets_train))
-    print("Validation:", np.shape(X_val), np.shape(targets_val))
-    print("Test:", np.shape(X_test), np.shape(targets_test))
 
     net = NeuralNetwork()
     d = np.shape(X_train)[0]  # number of features, 28x28
