@@ -51,7 +51,7 @@ class NeuralNetwork:
             train_acc = accuracy_score(targets_train, predictions_train)
             train_accuracies.append(train_acc)
             self.back_prop(targets_train, cross_entropy)
-            self.learning_rule(l_rate=0.000005, momentum=0.9)
+            self.learning_rule(l_rate=0.000005, momentum=0.9)  # optimal tuning: 5x10**-6
             train_loss = cross_entropy(predictions_train, targets_train)
             train_losses.append(train_loss)
 

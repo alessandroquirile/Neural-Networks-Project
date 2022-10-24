@@ -9,15 +9,15 @@ def one_hot_to_label(targets):
     return np.asarray(np.argmax(targets, axis=0))
 
 
-def plot_losses(epochs, train_losses, val_losses, show_val_min=False):
+def plot_losses(epochs, train_losses, val_losses, show_best_net=False):
     plt.plot(epochs, train_losses)
     plt.plot(epochs, val_losses, color="orange")
     legends = ["Training Loss", "Validation Loss"]
-    if show_val_min:
+    if show_best_net:
         xmin = epochs[np.argmin(val_losses)]
         ymin = np.min(val_losses)
-        plt.scatter(xmin, ymin, marker=".", c="orange", label="minimum")
-        legends.append("Validation Loss minimum")
+        plt.scatter(xmin, ymin, marker=".", c="orange")
+        legends.append("Best model")
     plt.legend(legends)
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
