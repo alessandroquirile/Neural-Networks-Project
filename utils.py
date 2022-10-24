@@ -5,26 +5,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 
-# Stampa per intero un array numpy
-def fullprint(*args, **kwargs):
-    from pprint import pprint
-    import numpy
-    opt = numpy.get_printoptions()
-    numpy.set_printoptions(threshold=numpy.inf)
-    pprint(*args, **kwargs)
-    numpy.set_printoptions(**opt)
-
-
-def accuracy_score(targets, predictions):
-    targets = one_hot_to_label(targets)
-    predictions = one_hot_to_label(predictions)  # no softmax needed
-    return np.mean(predictions == targets)
-
-
-def one_hot(targets):
-    return np.asmatrix(np.eye(10)[targets]).T
-
-
 def one_hot_to_label(targets):
     return np.asarray(np.argmax(targets, axis=0))
 

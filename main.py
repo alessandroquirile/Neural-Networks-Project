@@ -1,8 +1,9 @@
 from mnist.loader import MNIST
-from sklearn.utils import shuffle
 
-from activation_functions import *
+from activation_functions import relu, identity
+from data_processing import normalize, split, one_hot
 from loss_functions import cross_entropy
+from metrics import accuracy_score
 from utils import *
 
 
@@ -29,7 +30,7 @@ class NeuralNetwork:
             print("type:", layer.ty)
             print("act:", layer.activation)
             print("weights:", np.shape(layer.weights))
-            # print(layer.weights)  # input weight matrix
+            # print(layer.weights)
             print("bias:", np.shape(layer.bias))
             # print(layer.bias)
             print("")
@@ -157,22 +158,14 @@ if __name__ == '__main__':
     X_train, targets_train = mndata.load_training()  # 60.000 images, 28*28 features
     X_test, targets_test = mndata.load_testing()  # 10.000 images, 28*28 features
 
-    # In modo tale che lo split sia casuale
-    X_train, targets_train = shuffle(X_train, targets_train.T)
+    X_train, targets_train = normalize(X_train, targets_train, shuffle=True)
+    X_test, targets_test = normalize(X_test, targets_test, shuffle=False)
 
-    # Data pre processing
-    X_train = X_train / 255  # normalization within [0;1]
-    X_test = X_test / 255  # normalization within [0;1]
-    X_train = X_train.T  # data transposition
-    X_test = X_test.T  # data transposition
+    X_val, targets_val = split(X_train, targets_train, val_size=10000)
 
-    # Split: i 60.000 dati di training li divido in 50.000 per il training e 10.000 per il validation
-    X_val, X_train = np.hsplit(X_train, [10000])
-    targets_val, targets_train = np.hsplit(targets_train, [10000])
     if not balanced(targets_train, targets_val, targets_test):
         raise Exception("Classes are not balanced")
 
-    # One hot
     targets_train = one_hot(targets_train)
     targets_val = one_hot(targets_val)
     targets_test = one_hot(targets_test)
