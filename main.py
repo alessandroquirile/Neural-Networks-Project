@@ -36,8 +36,8 @@ class NeuralNetwork:
             print("")
 
     def fit(self, X_train, targets_train, X_val, targets_val, max_epochs):
-        train_losses = val_losses = []
-        train_accuracies = val_accuracies = []
+        train_losses, val_losses = [], []
+        train_accuracies, val_accuracies = [], []
 
         # Getting the minimum loss on validation set
         predictions_val = self.predict(X_val)
@@ -186,9 +186,9 @@ if __name__ == '__main__':
 
     net.build()
 
-    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=500)
+    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=100)
 
-    # Testing
+    # Model evaluation
     predictions_test = best_net.predict(X_test)
     test_acc = accuracy_score(targets_test, predictions_test)
     print(f"Accuracy score on test set is: {test_acc * 100 :.2f} %")

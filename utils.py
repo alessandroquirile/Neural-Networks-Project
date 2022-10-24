@@ -27,6 +27,15 @@ def plot_accuracies(epochs, train_accuracies, val_accuracies):
     plt.grid(True)
     plt.show()
 
+def plot_distribution(a, b, samples):
+    data = np.random.uniform(a, b, samples)
+    plt.hist(data, facecolor='blue')
+    plt.xlabel(f"X~U[{a},{b}]")
+    plt.ylabel('Count')
+    # plt.title("Uniform Distribution Histogram")
+    plt.grid(True)
+    plt.show()
+
 
 def balanced(targets_train, targets_val, targets_test, tolerance=3):
     rules = [is_balanced(targets_train, tolerance),
