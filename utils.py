@@ -18,14 +18,11 @@ def fullprint(*args, **kwargs):
 
 
 def accuracy_score(targets, predictions):
-    predictions = softmax(predictions)  # probably not needed
+    targets = one_hot_to_label(targets)
+    predictions = one_hot_to_label(predictions)  # no softmax needed
     correct_predictions = 0
-    for item in range(np.shape(predictions)[1]):
-        # print(predictions[:, item])
-        argmax_idx = np.argmax(predictions[:, item])
-        # print("argmax idx", argmax_idx)
-        # print(targets[:, item])
-        if targets[argmax_idx, item] == 1:
+    for y, t in zip(np.nditer(predictions), np.nditer(targets)):
+        if y == t:
             correct_predictions += 1
     return correct_predictions / np.shape(predictions)[1]
 
