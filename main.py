@@ -35,9 +35,9 @@ class NeuralNetwork:
             # print(layer.bias)
             print("")
 
-    def fit(self, X_train, targets_train, X_val, targets_val, max_epochs=50):
-        train_losses = []
-        val_losses = []
+    def fit(self, X_train, targets_train, X_val, targets_val, max_epochs):
+        train_losses = val_losses = []
+        train_accuracies = val_accuracies = []
 
         # Getting the minimum loss on validation set
         predictions_val = self.predict(X_val)
@@ -50,6 +50,7 @@ class NeuralNetwork:
         for epoch in range(max_epochs):
             predictions_train = self.predict(X_train)
             train_acc = accuracy_score(targets_train, predictions_train)
+            train_accuracies.append(train_acc)
             self.back_prop(targets_train, cross_entropy)
             self.learning_rule(l_rate=0.000005, momentum=0.9)
             train_loss = cross_entropy(predictions_train, targets_train)
@@ -58,6 +59,7 @@ class NeuralNetwork:
             # Validation
             predictions_val = self.predict(X_val)
             val_acc = accuracy_score(targets_val, predictions_val)
+            val_accuracies.append(val_acc)
             val_loss = cross_entropy(predictions_val, targets_val)
             val_losses.append(val_loss)
 
@@ -75,6 +77,7 @@ class NeuralNetwork:
         print(f"Validation loss is minimum at epoch: {best_epoch}")
 
         plot_losses(np.arange(max_epochs), train_losses, val_losses)
+        plot_accuracies(np.arange(max_epochs), train_accuracies, val_accuracies)
 
         return best_net
 
@@ -183,7 +186,7 @@ if __name__ == '__main__':
 
     net.build()
 
-    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=50)
+    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=500)
 
     # Testing
     predictions_test = best_net.predict(X_test)

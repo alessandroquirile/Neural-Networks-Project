@@ -9,12 +9,21 @@ def one_hot_to_label(targets):
     return np.asarray(np.argmax(targets, axis=0))
 
 
-def plot_losses(epochs, loss_train, loss_val):
-    plt.plot(epochs, loss_train)
-    plt.plot(epochs, loss_val, color="orange")
+def plot_losses(epochs, train_losses, val_losses):
+    plt.plot(epochs, train_losses)
+    plt.plot(epochs, val_losses, color="orange")
     plt.legend(["Training Loss", "Validation Loss"])
     plt.xlabel("Epochs")
     plt.ylabel("Loss")
+    plt.grid(True)
+    plt.show()
+
+def plot_accuracies(epochs, train_accuracies, val_accuracies):
+    plt.plot(epochs, train_accuracies)
+    plt.plot(epochs, val_accuracies, color="orange")
+    plt.legend(["Training Accuracy", "Validation Accuracy"])
+    plt.xlabel("Epochs")
+    plt.ylabel("Accuracy")
     plt.grid(True)
     plt.show()
 
