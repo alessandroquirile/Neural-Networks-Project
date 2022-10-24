@@ -25,14 +25,14 @@ class NeuralNetwork:
 
     def summary(self):
         for i, layer in enumerate(self.layers):
-            print("Layer", i)  # layer id
+            print("Layer", i)
             print("neurons:", layer.neurons)
             print("type:", layer.ty)
             print("act:", layer.activation)
             print("weights:", np.shape(layer.weights))
-            # print(layer.weights)
+            print(layer.weights)
             print("bias:", np.shape(layer.bias))
-            # print(layer.bias)
+            print(layer.bias)
             print("")
 
     def fit(self, X_train, targets_train, X_val, targets_val, max_epochs):
@@ -42,7 +42,6 @@ class NeuralNetwork:
         # Getting the minimum loss on validation set
         predictions_val = self.predict(X_val)
         min_val_loss = cross_entropy(predictions_val, targets_val)
-
         best_net = self  # net which minimize validation loss
         best_epoch = 0  # epoch where the validation loss is minimum
 
@@ -56,23 +55,23 @@ class NeuralNetwork:
             train_loss = cross_entropy(predictions_train, targets_train)
             train_losses.append(train_loss)
 
-            # Validation
+            # Model selection
             predictions_val = self.predict(X_val)
             val_acc = accuracy_score(targets_val, predictions_val)
             val_accuracies.append(val_acc)
             val_loss = cross_entropy(predictions_val, targets_val)
             val_losses.append(val_loss)
 
+            if val_loss < min_val_loss:
+                min_val_loss = val_loss
+                best_epoch = epoch
+                best_net = self
+
             print(f"E({epoch}): "
                   f"train_loss: {train_loss :.14f} "
                   f"val_loss: {val_loss :.14f} "
                   f"train_acc: {train_acc * 100 :.2f} % "
                   f"val_acc: {val_acc * 100 :.2f} %")
-
-            if val_loss < min_val_loss:
-                min_val_loss = val_loss
-                best_epoch = epoch
-                best_net = self
 
         print(f"Validation loss is minimum at epoch: {best_epoch}")
 
@@ -186,9 +185,9 @@ if __name__ == '__main__':
 
     net.build()
 
-    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=100)
+    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=50)
 
-    # Model evaluation
+    # Model testing
     predictions_test = best_net.predict(X_test)
     test_acc = accuracy_score(targets_test, predictions_test)
     print(f"Accuracy score on test set is: {test_acc * 100 :.2f} %")
