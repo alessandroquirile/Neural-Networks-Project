@@ -49,6 +49,7 @@ class NeuralNetwork:
         # batch mode
         for epoch in range(max_epochs):
             predictions_train = self.predict(X_train)
+            train_acc = accuracy_score(targets_train, predictions_train)
             self.back_prop(targets_train, cross_entropy)
             self.learning_rule(l_rate=0.000005, momentum=0.9)
             train_loss = cross_entropy(predictions_train, targets_train)
@@ -56,13 +57,15 @@ class NeuralNetwork:
 
             # Validation
             predictions_val = self.predict(X_val)
+            val_acc = accuracy_score(targets_val, predictions_val)
             val_loss = cross_entropy(predictions_val, targets_val)
             val_losses.append(val_loss)
 
-            print(f"E({epoch}) "
-                  f"train_loss: {train_loss} "
-                  f"val_loss: {val_loss} "
-                  f"val_acc: {accuracy_score(targets_val, predictions_val) * 100} %")
+            print(f"E({epoch}): "
+                  f"train_loss: {train_loss :.14f} "
+                  f"val_loss: {val_loss :.14f} "
+                  f"train_acc: {train_acc * 100 :.2f} % "
+                  f"val_acc: {val_acc * 100 :.2f} %")
 
             if val_loss < min_val_loss:
                 min_val_loss = val_loss
@@ -71,7 +74,7 @@ class NeuralNetwork:
 
         print(f"Validation loss is minimum at epoch: {best_epoch}")
 
-        plot(np.arange(max_epochs), train_losses, val_losses)
+        plot_losses(np.arange(max_epochs), train_losses, val_losses)
 
         return best_net
 
@@ -102,7 +105,7 @@ class Layer:
         self.weights = None  # input weights
         self.bias = None  # layer bias
         self.w_sum = None  # weighted_sum
-        self.df = None  # derivative of the activation function
+        self.dact = None  # derivative of the activation function
         self.dE_dW = None  # derivatives dE/dW where W is the input weights matrix
         self.dE_db = None  # derivatives dE/db where b is the bias
         self.deltas = None  # for back-prop
@@ -133,12 +136,12 @@ class Layer:
 
     def back_prop_step(self, next_layer, prev_layer, target, loss):
         if self.ty == "output":
-            self.df = self.activation(self.w_sum, derivative=True)
-            self.deltas = np.multiply(self.df,
+            self.dact = self.activation(self.w_sum, derivative=True)
+            self.deltas = np.multiply(self.dact,
                                       loss(self.out, target, derivative=True))
         else:
-            self.df = self.activation(self.w_sum, derivative=True)  # (m,batch_size)
-            self.deltas = np.multiply(self.df, np.dot(next_layer.weights.T, next_layer.deltas))
+            self.dact = self.activation(self.w_sum, derivative=True)  # (m,batch_size)
+            self.deltas = np.multiply(self.dact, np.dot(next_layer.weights.T, next_layer.deltas))
 
         self.dE_dW = self.deltas * prev_layer.out.T
 
@@ -184,5 +187,5 @@ if __name__ == '__main__':
 
     # Testing
     predictions_test = best_net.predict(X_test)
-    accuracy_test = accuracy_score(targets_test, predictions_test)
-    print(f"Accuracy score on test set is: {accuracy_test * 100} %")
+    test_acc = accuracy_score(targets_test, predictions_test)
+    print(f"Accuracy score on test set is: {test_acc * 100 :.2f} %")

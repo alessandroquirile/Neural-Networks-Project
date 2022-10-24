@@ -9,7 +9,7 @@ def one_hot_to_label(targets):
     return np.asarray(np.argmax(targets, axis=0))
 
 
-def plot(epochs, loss_train, loss_val):
+def plot_losses(epochs, loss_train, loss_val):
     plt.plot(epochs, loss_train)
     plt.plot(epochs, loss_val, color="orange")
     plt.legend(["Training Loss", "Validation Loss"])
@@ -19,7 +19,7 @@ def plot(epochs, loss_train, loss_val):
     plt.show()
 
 
-def balanced(targets_train, targets_val, targets_test, tolerance=2.5):
+def balanced(targets_train, targets_val, targets_test, tolerance=3):
     rules = [is_balanced(targets_train, tolerance),
              is_balanced(targets_val, tolerance),
              is_balanced(targets_test, tolerance)]
