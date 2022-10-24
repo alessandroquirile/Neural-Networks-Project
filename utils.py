@@ -18,7 +18,7 @@ def fullprint(*args, **kwargs):
 
 
 def accuracy_score(targets, predictions):
-    predictions = softmax(predictions)
+    predictions = softmax(predictions)  # probably not needed
     correct_predictions = 0
     for item in range(np.shape(predictions)[1]):
         # print(predictions[:, item])
@@ -31,7 +31,7 @@ def accuracy_score(targets, predictions):
 
 
 def one_hot(targets):
-    return np.asmatrix(np.eye(10)[targets]).T  # vettore colonna
+    return np.asmatrix(np.eye(10)[targets]).T
 
 
 def one_hot_to_label(targets):
@@ -48,12 +48,14 @@ def plot(epochs, loss_train, loss_val):
     plt.show()
 
 
-def balanced(targets_train, targets_val, targets_test):
-    return is_balanced(targets_train) and is_balanced(targets_val) and is_balanced(targets_test)
+def balanced(targets_train, targets_val, targets_test, tolerance=2.5):
+    return is_balanced(targets_train, tolerance) and \
+           is_balanced(targets_val, tolerance) and \
+           is_balanced(targets_test, tolerance)
 
 
 # https://www.researchgate.net/figure/Class-percentages-in-MNIST-dataset_fig2_320761896
-def is_balanced(targets):
+def is_balanced(targets, tolerance):
     c = Counter(targets)
     percentages = [v / c.total() * 100 for v in c.values()]
-    return math.isclose(min(percentages), max(percentages), abs_tol=2.5)
+    return math.isclose(min(percentages), max(percentages), abs_tol=tolerance)
