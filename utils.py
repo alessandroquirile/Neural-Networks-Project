@@ -4,8 +4,6 @@ from collections import Counter
 import numpy as np
 from matplotlib import pyplot as plt
 
-from post_processing_functions import softmax
-
 
 # Stampa per intero un array numpy
 def fullprint(*args, **kwargs):
@@ -20,11 +18,7 @@ def fullprint(*args, **kwargs):
 def accuracy_score(targets, predictions):
     targets = one_hot_to_label(targets)
     predictions = one_hot_to_label(predictions)  # no softmax needed
-    correct_predictions = 0
-    for y, t in zip(np.nditer(predictions), np.nditer(targets)):
-        if y == t:
-            correct_predictions += 1
-    return correct_predictions / np.shape(predictions)[1]
+    return np.mean(predictions == targets)
 
 
 def one_hot(targets):
@@ -46,9 +40,10 @@ def plot(epochs, loss_train, loss_val):
 
 
 def balanced(targets_train, targets_val, targets_test, tolerance=2.5):
-    return is_balanced(targets_train, tolerance) and \
-           is_balanced(targets_val, tolerance) and \
-           is_balanced(targets_test, tolerance)
+    rules = [is_balanced(targets_train, tolerance),
+             is_balanced(targets_val, tolerance),
+             is_balanced(targets_test, tolerance)]
+    return all(rules)
 
 
 # https://www.researchgate.net/figure/Class-percentages-in-MNIST-dataset_fig2_320761896
