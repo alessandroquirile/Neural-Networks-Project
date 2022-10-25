@@ -15,13 +15,13 @@ class NeuralNetwork:
     def add(self, layer):
         self.layers.append(layer)
 
-    def build(self):
+    def compile(self):
         for i, layer in enumerate(self.layers):
             if i == 0:
                 layer.ty = "input"
             else:
-                layer.ty = "output" if i == len(self.layers) - 1 else "hidden"
-                layer.configure(self.layers[i - 1].neurons)
+                layer.ty = "output" if i == (len(self.layers) - 1) else "hidden"
+                layer.build(self.layers[i - 1].neurons)
 
     def summary(self):
         for i, layer in enumerate(self.layers):
@@ -30,20 +30,19 @@ class NeuralNetwork:
             print("type:", layer.ty)
             print("act:", layer.activation)
             print("weights:", np.shape(layer.weights))
-            print(layer.weights)
+            # print(layer.weights)
             print("bias:", np.shape(layer.bias))
-            print(layer.bias)
+            # print(layer.bias)
             print("")
 
-    def fit(self, X_tr, targets_tr, X_vl, targets_vl, max_epochs):
+    def fit(self, X_tr, targets_tr, X_vl, targets_vl, max_epochs, l_rate, momentum):
         train_losses, val_losses = [], []
         train_accuracies, val_accuracies = [], []
 
-        # Getting the minimum loss on validation set
         predictions_val = self.predict(X_vl)
-        min_val_loss = cross_entropy(predictions_val, targets_vl)
+        min_val_loss = cross_entropy(predictions_val, targets_vl)  # Getting the minimum loss on validation set
         best_model = self  # net which minimize validation loss
-        best_epoch = 0  # epoch where the validation loss is minimum
+        best_epoch = 0  # epoch where the validation loss is the smallest
 
         # batch mode
         for epoch in range(max_epochs):
@@ -51,7 +50,7 @@ class NeuralNetwork:
             train_acc = accuracy_score(targets_tr, predictions_train)
             train_accuracies.append(train_acc)
             self.back_prop(targets_tr, cross_entropy)
-            self.learning_rule(l_rate=0.000005, momentum=0.9)  # optimal tuning: 5x10**-6
+            self.learning_rule(l_rate=l_rate, momentum=momentum)
             train_loss = cross_entropy(predictions_train, targets_tr)
             train_losses.append(train_loss)
 
@@ -74,7 +73,6 @@ class NeuralNetwork:
                   f"val_acc: {val_acc * 100 :.2f} %")
 
         print(f"Validation loss is minimum at epoch: {best_epoch}")
-
         plot_losses(np.arange(max_epochs), train_losses, val_losses)
         plot_accuracies(np.arange(max_epochs), train_accuracies, val_accuracies)
 
@@ -100,21 +98,21 @@ class NeuralNetwork:
 class Layer:
 
     def __init__(self, neurons, ty=None, activation=None):
-        self.neurons = neurons  # number of neurons
-        self.ty = ty  # input, hidden or output
-        self.activation = activation  # activation function
-        self.out = None  # layer output
-        self.weights = None  # input weights
-        self.bias = None  # layer bias
-        self.w_sum = None  # weighted_sum
-        self.dact = None  # derivative of the activation function
-        self.dE_dW = None  # derivatives dE/dW where W is the input weights matrix
-        self.dE_db = None  # derivatives dE/db where b is the bias
-        self.deltas = None  # for back-prop
-        self.diff_w = None  # for MGD
-        self.diff_b = None  # for MGD
+        self.neurons = neurons
+        self.ty = ty
+        self.activation = activation
+        self.out = None
+        self.weights = None
+        self.bias = None
+        self.w_sum = None
+        self.dact = None
+        self.dE_dW = None
+        self.dE_db = None
+        self.deltas = None
+        self.diff_w = None
+        self.diff_b = None
 
-    def configure(self, prev_layer_neurons):
+    def build(self, prev_layer_neurons):
         self.set_activation()
         self.weights = np.asmatrix(np.random.uniform(-0.02, 0.02, (self.neurons, prev_layer_neurons)))
         self.bias = np.asmatrix(np.random.uniform(-0.02, 0.02, self.neurons)).T
@@ -178,12 +176,14 @@ if __name__ == '__main__':
     c = np.shape(targets_train)[0]  # number of classes, 10
 
     # Net creation
-    for m in (d, 100, c):
-        net.add(Layer(m))
+    for neurons in (d, 100, c):
+        net.add(Layer(neurons))
 
-    net.build()
+    net.compile()
 
-    best_net = net.fit(X_train, targets_train, X_val, targets_val, max_epochs=50)
+    best_net = net.fit(X_tr=X_train, targets_tr=targets_train,
+                       X_vl=X_val, targets_vl=targets_val,
+                       max_epochs=50, l_rate=0.000005, momentum=0.9)  # optimal tuning: 5x10**-6
 
     # Model testing
     predictions_test = best_net.predict(X_test)
