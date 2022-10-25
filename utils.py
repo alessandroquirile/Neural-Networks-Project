@@ -24,6 +24,7 @@ def plot_losses(epochs, train_losses, val_losses, show_best_net=False):
     plt.grid(True)
     plt.show()
 
+
 def plot_accuracies(epochs, train_accuracies, val_accuracies):
     plt.plot(epochs, train_accuracies)
     plt.plot(epochs, val_accuracies, color="orange")
@@ -32,6 +33,7 @@ def plot_accuracies(epochs, train_accuracies, val_accuracies):
     plt.ylabel("Accuracy")
     plt.grid(True)
     plt.show()
+
 
 def plot_distribution(a, b, samples):
     data = np.random.uniform(a, b, samples)
@@ -50,7 +52,6 @@ def balanced(targets_train, targets_val, targets_test, tolerance=3):
     return all(rules)
 
 
-# https://www.researchgate.net/figure/Class-percentages-in-MNIST-dataset_fig2_320761896
 def is_balanced(targets, tolerance):
     c = Counter(targets)
     percentages = [v / c.total() * 100 for v in c.values()]

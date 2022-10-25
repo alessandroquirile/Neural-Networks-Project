@@ -3,7 +3,7 @@ from scipy.special import expit
 
 
 def sigmoid(a, derivative=False):
-    # f_a = 1 / (1 + np.exp(-a))  # potrebbe causare overflow
+    # f_a = 1 / (1 + np.exp(-a))  # may cause overflow
     f_a = expit(a)
     if derivative:
         return np.multiply(f_a, (1 - f_a))

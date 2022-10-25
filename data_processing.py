@@ -17,5 +17,4 @@ def split(X, targets, val_size):
 
 
 def one_hot(targets):
-    # assert targets.max() + 1 == 10
     return np.asmatrix(np.eye(targets.max() + 1)[targets]).T

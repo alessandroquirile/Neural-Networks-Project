@@ -35,37 +35,37 @@ class NeuralNetwork:
             print(layer.bias)
             print("")
 
-    def fit(self, X_train, targets_train, X_val, targets_val, max_epochs):
+    def fit(self, X_tr, targets_tr, X_vl, targets_vl, max_epochs):
         train_losses, val_losses = [], []
         train_accuracies, val_accuracies = [], []
 
         # Getting the minimum loss on validation set
-        predictions_val = self.predict(X_val)
-        min_val_loss = cross_entropy(predictions_val, targets_val)
-        best_net = self  # net which minimize validation loss
+        predictions_val = self.predict(X_vl)
+        min_val_loss = cross_entropy(predictions_val, targets_vl)
+        best_model = self  # net which minimize validation loss
         best_epoch = 0  # epoch where the validation loss is minimum
 
         # batch mode
         for epoch in range(max_epochs):
-            predictions_train = self.predict(X_train)
-            train_acc = accuracy_score(targets_train, predictions_train)
+            predictions_train = self.predict(X_tr)
+            train_acc = accuracy_score(targets_tr, predictions_train)
             train_accuracies.append(train_acc)
-            self.back_prop(targets_train, cross_entropy)
+            self.back_prop(targets_tr, cross_entropy)
             self.learning_rule(l_rate=0.000005, momentum=0.9)  # optimal tuning: 5x10**-6
-            train_loss = cross_entropy(predictions_train, targets_train)
+            train_loss = cross_entropy(predictions_train, targets_tr)
             train_losses.append(train_loss)
 
             # Model selection
-            predictions_val = self.predict(X_val)
-            val_acc = accuracy_score(targets_val, predictions_val)
+            predictions_val = self.predict(X_vl)
+            val_acc = accuracy_score(targets_vl, predictions_val)
             val_accuracies.append(val_acc)
-            val_loss = cross_entropy(predictions_val, targets_val)
+            val_loss = cross_entropy(predictions_val, targets_vl)
             val_losses.append(val_loss)
 
             if val_loss < min_val_loss:
                 min_val_loss = val_loss
                 best_epoch = epoch
-                best_net = self
+                best_model = self
 
             print(f"E({epoch}): "
                   f"train_loss: {train_loss :.14f} "
@@ -78,7 +78,7 @@ class NeuralNetwork:
         plot_losses(np.arange(max_epochs), train_losses, val_losses)
         plot_accuracies(np.arange(max_epochs), train_accuracies, val_accuracies)
 
-        return best_net
+        return best_model
 
     def predict(self, X):
         for layer in self.layers:
@@ -144,9 +144,7 @@ class Layer:
         else:
             self.dact = self.activation(self.w_sum, derivative=True)  # (m,batch_size)
             self.deltas = np.multiply(self.dact, np.dot(next_layer.weights.T, next_layer.deltas))
-
         self.dE_dW = self.deltas * prev_layer.out.T
-
         self.dE_db = np.sum(self.deltas, axis=1)
 
     def update_weights(self, l_rate, momentum):
