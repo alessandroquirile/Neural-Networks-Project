@@ -33,8 +33,7 @@ if __name__ == '__main__':
 
     net.compile()
 
-    best_net = net.fit(X_train=X_train, targets_train=targets_train,
-                       X_val=X_val, targets_val=targets_val,
+    best_net = net.fit(X_train, targets_train, X_val, targets_val,
                        max_epochs=50, l_rate=0.000005, momentum=0.9)  # optimal tuning: 5x10**-6
 
     # Model testing
