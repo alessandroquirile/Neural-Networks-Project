@@ -11,9 +11,9 @@ def normalize(X, targets, shuffle):
 
 
 def split(X, targets, val_size):
-    X_val, X_train = np.hsplit(X, [val_size])
-    targets_val, targets_train = np.hsplit(targets, [val_size])
-    return X_val, targets_val
+    X_val, X = np.hsplit(X, [val_size])
+    targets_val, targets = np.hsplit(targets, [val_size])
+    return X_val, targets_val, X, targets
 
 
 def one_hot(targets):

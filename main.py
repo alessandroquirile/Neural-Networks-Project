@@ -14,7 +14,7 @@ if __name__ == '__main__':
     X_train, targets_train = normalize(X_train, targets_train, shuffle=True)
     X_test, targets_test = normalize(X_test, targets_test, shuffle=False)  # todo: devo normalizzare?
 
-    X_val, targets_val = split(X_train, targets_train, val_size=10000)
+    X_val, targets_val, X_train, targets_train = split(X_train, targets_train, val_size=10000)
 
     if not balanced(targets_train, targets_val, targets_test):
         raise Exception("Classes are not balanced")
