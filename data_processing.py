@@ -2,11 +2,10 @@ import numpy as np
 import sklearn
 
 
-def unit_range(X, targets, shuffle):
+def normalize(X, targets, shuffle):
     if shuffle:
         X, targets = sklearn.utils.shuffle(X, targets.T)
     X = (X - np.min(X)) / (np.max(X) - np.min(X))
-    X = X.T
     return X, targets
 
 

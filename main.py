@@ -1,7 +1,7 @@
 import numpy as np
 from mnist.loader import MNIST
 
-from data_processing import unit_range, split, one_hot
+from data_processing import normalize, split, one_hot
 from metrics import accuracy_score
 from models import NeuralNetwork, Layer
 from utils import balanced
@@ -11,8 +11,10 @@ if __name__ == '__main__':
     X_train, targets_train = mndata.load_training()  # 60.000 images, 28*28 features
     X_test, targets_test = mndata.load_testing()  # 10.000 images, 28*28 features
 
-    X_train, targets_train = unit_range(X_train, targets_train, shuffle=True)
-    X_test, targets_test = unit_range(X_test, targets_test, shuffle=False)
+    X_train, targets_train = normalize(X_train, targets_train, shuffle=True)
+    X_test, targets_test = normalize(X_test, targets_test, shuffle=False)
+    X_train = X_train.T
+    X_test = X_test.T
 
     X_val, targets_val, X_train, targets_train = split(X_train, targets_train, val_size=10000)
 
