@@ -30,13 +30,15 @@ if __name__ == '__main__':
     c = np.shape(targets_train)[0]  # number of classes, 10
 
     # Net creation
-    for neurons in (d, 100, c):
+    for neurons in (d, 50, c):
         net.add(Layer(neurons))
 
     net.compile()
 
+    # net.summary()
+
     best_net = net.fit(X_train, targets_train, X_val, targets_val,
-                       max_epochs=50, l_rate=0.000005, momentum=0.9)
+                       max_epochs=100, l_rate=10**-6, momentum=0.9)
 
     # Model testing
     predictions_test = best_net.predict(X_test)

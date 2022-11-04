@@ -12,10 +12,10 @@ def cross_entropy(y, t, derivative=False, post_process=True):
         if derivative:
             return y - t
         sm = softmax(y)
-        item_loss = -np.sum(np.multiply(t, np.log(sm)), axis=0)
-        return np.mean(item_loss)
+        items_loss = -np.sum(np.multiply(t, np.log(sm)), axis=0)
+        return np.mean(items_loss)
     else:
         if derivative:
             return -np.sum(np.divide(t, y), axis=1)
-        item_loss = -np.sum(np.multiply(t, y), axis=0)
-        return np.mean(item_loss)
+        items_loss = -np.sum(np.multiply(t, y), axis=0)
+        return np.mean(items_loss)
