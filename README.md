@@ -1,4 +1,4 @@
-# Deep-Learning-Project
+# Neural-Networks-Project
 Parte A: Per qualsiasi scelta delle funzioni di attivazione (unica per ogni strato) e per qualsiasi scelta della funzione di costo (sum of squares e
 cross-entropy con e senza softmax) progettare ed implementare funzioni per la forward propagation
 e per la backpropagation per una rete neurale multistrato.
