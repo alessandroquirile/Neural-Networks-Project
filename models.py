@@ -38,7 +38,7 @@ class NeuralNetwork:
 
         predictions_val = self.predict(X_val)
         min_val_loss = cross_entropy(predictions_val, targets_val)  # Getting the minimum loss on validation set
-        best_model = self  # net which minimize validation loss
+        best_model = self  # net which minimizes the validation loss
         best_epoch = 0  # epoch where the validation loss is the smallest
 
         # batch mode
